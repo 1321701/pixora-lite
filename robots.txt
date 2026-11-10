@@ -1,0 +1,93 @@
+# NanoAI 站点爬虫协议
+# 本站为小型个人运营服务，用户数据均为私有内容
+# 请求所有AI爬虫与数据采集器放过本站
+
+# === AI 训练爬虫：全面禁止 ===
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
+User-agent: omgili
+Disallow: /
+
+User-agent: omgilibot
+Disallow: /
+
+# === 通用数据采集：禁止 ===
+User-agent: Scrapy
+Disallow: /
+
+User-agent: python-requests
+Disallow: /
+
+User-agent: curl
+Disallow: /
+
+User-agent: wget
+Disallow: /
+
+# === 普通搜索引擎：允许首页，禁止用户数据 ===
+User-agent: *
+Disallow: /api/
+Disallow: /canvas
+Disallow: /history
+Disallow: /tasks
+Disallow: /chat_history
+Disallow: /nanoai-secure/
+Allow: /
+
+# AI 访问声明文件
+# 详见 /llms.txt

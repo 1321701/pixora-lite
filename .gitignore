@@ -1,0 +1,10 @@
+﻿node_modules/
+.DS_Store
+Thumbs.db
+*.log
+/dist/
+/showcase-data/
+/assets/showcase/*
+!/assets/showcase/.gitkeep
+/config.local.js
+

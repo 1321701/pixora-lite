@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- Pixora 自部署版：本地后端（必须在页面任何脚本之前加载） -->
+    <script src="config.js?v=1793760000"></script>
+    <script src="pxl/lite-api.js?v=1793760000"></script>
+    <script src="pxl/backend.js?v=1793760000"></script>
+    <script>if(!window.__pxHttpsRedirect&&!localStorage.getItem('nano_user'))window.location.replace('/index.html');</script>
+    <!-- px-scale-inline: style attributes multiplied by --s -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixora AI Art Studio</title>
+        <link rel="icon" href="/favicon.ico?v=3" sizes="16x16 32x32 48x48">
+    <link rel="icon" type="image/png" href="/assets/favicon-bg.png?v=3">
+    <link rel="apple-touch-icon" href="/assets/logo-icon.png">
+    <meta name="description" content="一句话，生成可商用的高清作品。汇集 Nano Banana Pro、GPT Image、Seedream 等顶级模型，从灵感到成图一步到位。">
+    <link rel="preload" href="fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- 使用系统字体栈，避免 Google Fonts 加载问题 -->
+    <link rel="stylesheet" href="style.css?v=1793760000">
+    <link rel="stylesheet" href="pixora-theme.css?v=1793760000">
+    <script src="pixora-ui.js?v=1793760000"></script>
+    <!-- 画布页预加载：空闲时提前缓存画布页及核心资源，切换时秒开 -->
+    <link rel="prefetch" href="canvas.html" as="document">
+    <link rel="prefetch" href="canvas.css?v=1793760000" as="style">
+    <link rel="prefetch" href="canvas/canvas-core.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-blocks.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-selection.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-edges.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-snap.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-generate.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-history.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-store.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-minimap.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-history-ui.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-ui.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/character-lib.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/canvas-main.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/stage3d-core.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas/stage3d.js?v=1793760000" as="script">
+    <script type="speculationrules">
+    {
+      "prefetch": [{ "source": "list", "urls": ["/canvas.html"], "eagerness": "immediate" }],
+      "prerender": [{ "source": "list", "urls": ["/canvas.html"], "eagerness": "moderate" }]
+    }
+    </script>
+    <!-- MathJax for LaTeX formulas -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <!-- MathJax 延迟加载，避免阻塞页面渲染 -->
+    <script>
+        // 延迟加载 MathJax，让页面先渲染
+        setTimeout(() => {
+            const script = document.createElement('script');
+            script.id = 'MathJax-script';
+            script.async = true;
+            script.src = 'libs/tex-mml-chtml.min.js';
+            document.head.appendChild(script);
+        }, 200);
+    </script>
+    <!-- Markdown解析库 -->
+    <script src="marked.min.js?v=1793760000"></script>
+    <!-- 流式 Markdown 渲染器 -->
+    <script src="markdown-stream-renderer.js?v=1793760000"></script>
+    <!-- Unified 生态流式渲染（延迟加载，避免阻塞页面） -->
+    <script type="module">
+        // 延迟加载 esm.sh 模块，避免阻塞页面渲染
+        setTimeout(async () => {
+            try {
+                const [{ unified }, remarkParse, remarkRehype, rehypeRaw, rehypeHighlight, rehypeStringify, remarkGfm] = await Promise.all([
+                    import('https://esm.sh/unified@11?bundle'),
+                    import('https://esm.sh/remark-parse@11?bundle'),
+                    import('https://esm.sh/remark-rehype@11?bundle'),
+                    import('https://esm.sh/rehype-raw@7?bundle'),
+                    import('https://esm.sh/rehype-highlight@7?bundle'),
+                    import('https://esm.sh/rehype-stringify@10?bundle'),
+                    import('https://esm.sh/remark-gfm@4?bundle')
+                ]);
+                
+                // 创建处理器
+                const processor = unified()
+                    .use(remarkParse.default || remarkParse, { allowDangerousHtml: true })
+                    .use(remarkGfm.default || remarkGfm)
+                    .use(remarkRehype.default || remarkRehype, { allowDangerousHtml: true })
+                    .use(rehypeRaw.default || rehypeRaw)
+                    .use(rehypeHighlight.default || rehypeHighlight)
+                    .use(rehypeStringify.default || rehypeStringify);
+                
+                // 挂载到全局
+                window.unifiedProcessor = processor;
+                window.unified = { unified, remarkParse, remarkRehype, rehypeRaw, rehypeHighlight, rehypeStringify, remarkGfm };
+                // console.log('[Markdown] Unified 处理器加载成功');
+            } catch (err) {
+                console.warn('[Markdown] Unified 处理器加载失败，将使用降级方案:', err);
+            }
+        }, 100); // 延迟100ms加载，让页面先渲染
+    </script>
+
+    <!-- 代码高亮 - 延迟加载，避免阻塞页面渲染 -->
+    <link rel="preload" href="libs/github-dark.min.css?v=1793760000" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="libs/github-dark.min.css?v=1793760000"></noscript>
+    <script>
+        // 延迟加载 highlight.js，让页面先渲染
+        setTimeout(() => {
+            const script = document.createElement('script');
+            script.src = 'libs/highlight.min.js';
+            script.onload = () => {
+                if (window.hljs) {
+                    window.hljs.highlightAll();
+                }
+            };
+            document.head.appendChild(script);
+        }, 300);
+    </script>
+    <script>
+        // 捕获并抑制浏览器扩展导致的错误
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('message channel closed')) {
+                e.preventDefault();
+                console.warn('[抑制错误] 浏览器扩展消息通道错误:', e.message);
+                return false;
+            }
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
+                e.preventDefault();
+                console.warn('[抑制错误] 浏览器扩展异步消息错误:', e.reason.message);
+                return false;
+            }
+        });
+        
+        // 聊天布局模式（覆盖/挤压）
+        let chatPushMode = localStorage.getItem('chat_push_mode') !== 'false';
+        
+        // 外部链接安全提示相关变量
+        let pendingExternalUrl = '';
+        
+        // 外部链接安全提示弹窗函数
+        function showExternalLinkModal(url) {
+            pendingExternalUrl = url;
+            const modal = document.getElementById('externalLinkModal');
+            const urlDisplay = document.getElementById('externalLinkUrl');
+            if (modal && urlDisplay) {
+                urlDisplay.textContent = url;
+                modal.classList.remove('hidden');
+            }
+        }
+        
+        function closeExternalLinkModal() {
+            const modal = document.getElementById('externalLinkModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                pendingExternalUrl = '';
+            }
+        }
+        
+        function confirmExternalLink() {
+            if (pendingExternalUrl) {
+                window.open(pendingExternalUrl, '_blank', 'noopener,noreferrer');
+                closeExternalLinkModal();
+            }
+        }
+        
+        // 拦截外部链接点击
+        function setupExternalLinkInterceptor() {
+            document.addEventListener('click', function(e) {
+                const target = e.target.closest('a');
+                if (target && target.href) {
+                    const url = target.href;
+                    // 检查是否是外部链接
+                    const isExternal = !url.startsWith(window.location.origin) &&
+                                       (url.startsWith('http://') || url.startsWith('https://'));
+                    // 白名单：同主机名（忽略端口，如插件下载走 80 端口）或下载链接不拦截
+                    let whitelist = false;
+                    try {
+                        const u = new URL(url);
+                        if (u.hostname === window.location.hostname) whitelist = true; // 同主机即视为站内
+                        if (u.pathname.indexOf('/pixora-dist/') === 0) whitelist = true; // 插件下载目录
+                    } catch (err) {}
+                    if (isExternal && !whitelist) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showExternalLinkModal(url);
+                    }
+                }
+            }, true);
+        }
+        
+        // 初始化布局模式
+        function initChatMode() {
+            if (chatPushMode) {
+                document.body.classList.add('chat-push-mode');
+            }
+            updateModeToggleIcon();
+        }
+        
+        // 切换布局模式
+        function toggleChatMode() {
+            chatPushMode = !chatPushMode;
+            localStorage.setItem('chat_push_mode', chatPushMode);
+            document.body.classList.toggle('chat-push-mode', chatPushMode);
+            updateModeToggleIcon();
+            
+            // 确保侧边栏在切换模式时保持打开状态
+            const sidebar = document.getElementById('aiChatSidebar');
+            if (sidebar && !sidebar.classList.contains('open')) {
+                toggleAiChat();
+            }
+        }
+        
+        // 更新模式切换按钮图标
+        function updateModeToggleIcon() {
+            const btn = document.getElementById('chatModeToggle');
+            if (!btn) return;
+            
+            btn.classList.toggle('active', chatPushMode);
+            btn.title = chatPushMode ? '挤压模式（点击切换）' : '覆盖模式（点击切换）';
+            
+            // 更新图标
+            if (chatPushMode) {
+                // 挤压模式图标 - 左右分栏
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="3" x2="9" y2="21"></line>
+                    </svg>
+                `;
+            } else {
+                // 覆盖模式图标 - 浮动窗口
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="8" y="3" width="13" height="18" rx="2" ry="2"></rect>
+                        <line x1="4" y1="8" x2="4" y2="16"></line>
+                    </svg>
+                `;
+            }
+        }
+        
+        // AI聊天侧边栏切换函数（提前定义，供HTML调用）
+        function toggleAiChat() {
+            const sidebar = document.getElementById('aiChatSidebar');
+            const handle = document.getElementById('sidebarResizeHandle');
+            const robot = document.querySelector('.ai-chat-robot');
+            if (!sidebar) return;
+            const isOpen = sidebar.classList.toggle('open');
+            if (handle) {
+                handle.classList.toggle('visible', isOpen);
+            }
+            // 打开时隐藏小机器人图标，关闭时显示
+            if (robot) {
+                robot.style.display = isOpen ? 'none' : 'flex';
+            }
+            // 打开时恢复保存的宽度，关闭时清除内联宽度
+            if (isOpen) {
+                const savedWidth = localStorage.getItem('ai_chat_sidebar_width');
+                if (savedWidth) {
+                    sidebar.style.width = savedWidth + 'px';
+                }
+                // 滚动聊天消息到底部（同步执行，滑入动画首帧前完成，无跳动感）
+                const mc = document.getElementById('chatMessages');
+                if (mc) {
+                    mc.scrollTop = mc.scrollHeight;
+                }
+            } else {
+                sidebar.style.width = '';
+            }
+        }
+        
+        // 侧边栏拖拽调整宽度
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('aiChatSidebar');
+            const handle = document.getElementById('sidebarResizeHandle');
+            if (!sidebar || !handle) return;
+            
+            let isDragging = false;
+            let startX = 0;
+            let startWidth = 480;
+            let dragOverlay = null;
+            
+            // 初始化时恢复保存的宽度（仅当侧边栏打开时）
+            const savedWidth = localStorage.getItem('ai_chat_sidebar_width');
+            if (savedWidth && sidebar.classList.contains('open')) {
+                sidebar.style.width = savedWidth + 'px';
+            }
+            
+            handle.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                startX = e.clientX;
+                startWidth = sidebar.offsetWidth;
+                sidebar.style.transition = 'none';
+                document.body.style.cursor = 'ew-resize';
+                
+                // 创建拖拽遮罩，阻止鼠标事件穿透到聊天内容
+                dragOverlay = document.createElement('div');
+                dragOverlay.id = 'dragOverlay';
+                dragOverlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999999990;cursor:ew-resize;';
+                document.body.appendChild(dragOverlay);
+                
+                // 隐藏聊天内容以提升性能
+                const messagesContainer = document.getElementById('chatMessages');
+                if (messagesContainer) {
+                    messagesContainer.style.visibility = 'hidden';
+                }
+                
+                e.preventDefault();
+            });
+            
+            window.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                // 侧栏在右侧，宽度 = 屏幕宽度 - 鼠标X坐标
+                const newWidth = window.innerWidth - e.clientX;
+                if (newWidth >= 480 && newWidth <= 1000) {
+                    sidebar.style.width = newWidth + 'px';
+                    // 输入区域现在使用 position: absolute，会自动跟随侧边栏宽度
+                }
+            });
+            
+            window.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    sidebar.style.transition = '';
+                    document.body.style.cursor = '';
+                    
+                    // 保存当前宽度
+                    const currentWidth = sidebar.offsetWidth;
+                    localStorage.setItem('ai_chat_sidebar_width', currentWidth);
+                    
+                    // 移除遮罩
+                    if (dragOverlay) {
+                        dragOverlay.remove();
+                        dragOverlay = null;
+                    }
+                    
+                    // 恢复聊天内容显示
+                    const messagesContainer = document.getElementById('chatMessages');
+                    if (messagesContainer) {
+                        messagesContainer.style.visibility = '';
+                    }
+                }
+            });
+        });
+    </script>
+    <style>
+    /* ---- 右上角「邀请有礼」入口动效 ---- */
+    #inviteEntryBtn.px-tr-invite {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        border-color: rgba(196, 241, 123, .55);
+        background: linear-gradient(115deg, #e6ffa8 0%, #c4f17b 26%, #9fe24f 50%, #d8ff93 74%, #e6ffa8 100%);
+        background-size: 240% 100%;
+        color: #16200a;
+        font-weight: 800;
+        letter-spacing: .02em;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        animation: invGrad 5.5s linear infinite, invGlow 2.8s ease-in-out infinite;
+        will-change: background-position, box-shadow;
+    }
+    #inviteEntryBtn.px-tr-invite:hover {
+        color: #16200a;
+        border-color: rgba(196, 241, 123, .95);
+        transform: translateY(-1px) scale(1.04);
+    }
+    #inviteEntryBtn.px-tr-invite:active { transform: scale(.97); }
+
+    @keyframes invGrad {
+        0%   { background-position: 0% 50%; }
+        100% { background-position: 100% 50%; }
+    }
+    @keyframes invGlow {
+        0%, 100% { box-shadow: 0 0 calc(6px * var(--s, 1)) rgba(196, 241, 123, .22); }
+        50%      { box-shadow: 0 0 calc(16px * var(--s, 1)) rgba(196, 241, 123, .6), 0 0 0 calc(3px * var(--s, 1)) rgba(196, 241, 123, .16); }
+    }
+
+    /* 光带从左扫到右 */
+    #inviteEntryBtn.px-tr-invite::after {
+        content: "";
+        position: absolute;
+        top: -60%;
+        left: -70%;
+        width: 42%;
+        height: 220%;
+        transform: rotate(18deg);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75), transparent);
+        animation: invShine 3.6s cubic-bezier(.4, 0, .2, 1) infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+    @keyframes invShine {
+        0%, 58%   { left: -70%; }
+        82%, 100% { left: 135%; }
+    }
+
+    /* 礼物图标周期摇摆 */
+    #inviteEntryBtn.px-tr-invite .inv-ico svg {
+        width: calc(17px * var(--s, 1));
+        height: calc(17px * var(--s, 1));
+        filter: drop-shadow(0 calc(1px * var(--s, 1)) calc(1px * var(--s, 1)) rgba(255, 255, 255, .55));
+        transform-origin: 50% 65%;
+        animation: invWiggle 3.6s ease-in-out infinite;
+    }
+    @keyframes invWiggle {
+        0%, 70%, 100% { transform: rotate(0) scale(1); }
+        76%           { transform: rotate(-16deg) scale(1.12); }
+        82%           { transform: rotate(13deg) scale(1.12); }
+        88%           { transform: rotate(-8deg) scale(1.06); }
+        94%           { transform: rotate(4deg) scale(1.02); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #inviteEntryBtn.px-tr-invite,
+        #inviteEntryBtn.px-tr-invite::after,
+        #inviteEntryBtn.px-tr-invite .inv-ico svg { animation: none !important; }
+    }
+    </style>
+</head>
+<body class="px-theme px-view-generate">
+    <!-- 外部链接安全提示弹窗 -->
+    <div id="externalLinkModal" class="external-link-modal hidden">
+        <div class="external-link-modal-content">
+            <div class="external-link-modal-header">
+                <h3>⚠️ <span data-i18n="externalLinkTitle">即将离开本站</span></h3>
+                <button class="external-link-close-btn" onclick="closeExternalLinkModal()">&times;</button>
+            </div>
+            <div class="external-link-modal-body">
+                <p data-i18n="externalLinkDesc">您即将访问以下外部链接：</p>
+                <div class="external-link-url" id="externalLinkUrl"></div>
+                <p class="external-link-warning" data-i18n="externalLinkWarning">请注意：本站不对外部链接的内容负责，请确保您信任该网站。</p>
+            </div>
+            <div class="external-link-modal-footer">
+                <button class="external-link-btn external-link-cancel" onclick="closeExternalLinkModal()" data-i18n="cancel">取消</button>
+                <button class="external-link-btn external-link-confirm" onclick="confirmExternalLink()" data-i18n="externalLinkConfirm">继续访问</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志弹窗 -->
+    <div id="logsModal" class="logs-modal hidden">
+        <div class="logs-modal-content">
+            <div class="logs-modal-header">
+                <h2 data-i18n="systemNotice">系统通知</h2>
+                <button class="logs-close-btn" onclick="closeLogsModal()">×</button>
+            </div>
+            <div class="logs-modal-body">
+                <div id="logsList" class="logs-list">
+                    <p class="empty" data-i18n="noNotice">暂无通知</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 广告弹窗 -->
+    <div id="adModal" class="ad-modal hidden">
+        <div class="ad-modal-content">
+            <button class="ad-close-btn" onclick="closeAdModal()">×</button>
+            <div class="ad-content">
+                <h3 id="adTitle"></h3>
+                <img id="adImage" src="" alt="广告">
+                <div class="ad-actions">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="dontShowAgain">
+                        不再显示
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI聊天助手悬浮按钮 - 小机器人 -->
+    <div class="ai-chat-robot" onclick="toggleAiChat()" title="小P" data-i18n-title="chatRobotName">
+        <div class="robot-head">
+            <div class="robot-face">
+                <div class="robot-eye left"></div>
+                <div class="robot-eye right"></div>
+                <div class="robot-mouth"></div>
+            </div>
+            <div class="robot-antenna"></div>
+        </div>
+        <div class="robot-body"></div>
+    </div>
+
+    <!-- 背景彩球 -->
+    <div class="bg-balls">
+        <div class="bg-ball ball-1"></div>
+        <div class="bg-ball ball-2"></div>
+        <div class="bg-ball ball-3"></div>
+        <div class="bg-ball ball-4"></div>
+        <div class="gradient-overlay"></div>
+    </div>
+    <div class="app-container">
+        <!-- 左侧导航栏 -->
+        <nav class="px-rail" aria-label="主导航">
+            <a class="px-rail-logo" href="index.html" title="Pixora AI">
+                <img src="assets/logo-icon.png" alt="Pixora AI">
+                <span class="px-rail-brand">Pixora<b> AI</b></span>
+            </a>
+            <div class="px-rail-group">
+                <button type="button" class="px-rail-item" data-view="inspire">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="10" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="6" rx="1.6"/><rect x="3" y="16" width="7.5" height="5" rx="1.6"/><rect x="13.5" y="12" width="7.5" height="9" rx="1.6"/></svg>
+                    <span data-i18n="pxNavInspire">主页</span>
+                </button>
+                <button type="button" class="px-rail-item active" data-view="generate" aria-current="page">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 15c.3 2 1 2.7 3 3-2 .3-2.7 1-3 3-.3-2-1-2.7-3-3 2-.3 2.7-1 3-3z" opacity=".6"/></svg>
+                    <span data-i18n="pxNavGenerate">生成</span>
+                </button>
+                <a id="canvasBtn" class="px-rail-item" href="canvas.html" data-i18n-title="infiniteCanvas" title="无限画布">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4M6.5 10v4.5a2 2 0 0 0 2 2H14"/></svg>
+                    <span data-i18n="pxNavCanvas">画布</span>
+                </a>
+                <i class="px-rail-sep"></i>
+                <button type="button" id="historyBtn" class="px-rail-item" data-i18n-title="history" title="历史记录">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+                    <span data-i18n="pxNavHistory">历史</span>
+                </button>
+                <button type="button" id="favoritesBtn" class="px-rail-item" data-i18n-title="myFavorites" title="我的收藏">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="m12 2.8 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17l-5.6 3 1.1-6.2L3 9.4l6.2-.9z"/></svg>
+                    <span data-i18n="pxNavFavorites">收藏</span>
+                </button>
+            </div>
+            <div class="px-rail-group px-rail-bottom">
+                <button type="button" id="notificationBtn" class="px-rail-item" title="系统通知" data-i18n-title="systemNotice" onclick="showLogsModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                    <span data-i18n="pxNavNotice">通知</span>
+                    <span id="logBadge" style="display: none;"></span>
+                </button>
+                <button type="button" id="settingsBtn" class="px-rail-item" title="设置" data-i18n-title="settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="pxNavSettings">设置</span>
+                </button>
+                <div class="px-lang" hidden>
+                    <button type="button" id="langZh" class="lang-btn">中</button>
+                    <button type="button" id="langEn" class="lang-btn">EN</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="main-content-wrapper">
+        <!-- 右上角：PS 插件 / 积分 / 用户 -->
+        <div class="px-topright">
+            <button type="button" id="inviteEntryBtn" class="px-tr-btn px-tr-invite" title="邀请有礼，邀请好友得积分" onclick="showInviteModal()"><span class="inv-ico" style="display:inline-flex;align-items:center;position:relative;z-index:2;"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="invGiftLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9b8a"/><stop offset="1" stop-color="#ff6b58"/></linearGradient><linearGradient id="invGiftBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5f70"/><stop offset="1" stop-color="#dc2038"/></linearGradient></defs><ellipse cx="8.7" cy="5.9" rx="3.4" ry="2" transform="rotate(-28 8.7 5.9)" fill="#ffcf3d"/><ellipse cx="15.3" cy="5.9" rx="3.4" ry="2" transform="rotate(28 15.3 5.9)" fill="#ffcf3d"/><circle cx="12" cy="7.2" r="1.7" fill="#ffb01f"/><rect x="2.5" y="8.6" width="19" height="4.7" rx="1.7" fill="url(#invGiftLid)"/><rect x="4.2" y="12.9" width="15.6" height="8.4" rx="1.8" fill="url(#invGiftBody)"/><rect x="10.4" y="8.6" width="3.2" height="12.7" rx="1.2" fill="#ffd93d"/><rect x="10.9" y="12.9" width="1.1" height="8.4" fill="rgba(255,255,255,.32)"/><rect x="5.4" y="14.2" width="2.6" height="5" rx="1.1" fill="rgba(255,255,255,.3)"/></svg></span><span class="px-tr-label" style="position:relative;z-index:2;">邀请有礼</span></button>
+            <button type="button" id="psPluginBtn" class="px-tr-btn" title="PS 插件" onclick="showPsPluginModal()"><span class="px-ps">Ps</span><span class="px-tr-label">插件</span></button>
+            <div class="credits-display" id="creditsDisplay" title="积分余额">
+                <span class="px-coin"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg></span>
+                <span class="credits-value" id="creditsValue">--</span>
+                <span class="px-unit" data-i18n="pxCreditsUnit">积分</span>
+                <button type="button" class="px-recharge" onclick="showCdkModal()" title="充值">+</button>
+            </div>
+                <div class="user-menu">
+                    <button type="button" id="userAvatar" class="user-avatar-btn" style="width: calc(32px * var(--s, 1)); height: calc(32px * var(--s, 1)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                        <span id="avatarText">U</span>
+                    </button>
+                    <div id="userDropdown" class="user-dropdown" style="position: absolute; padding: calc(15px * var(--s, 1)); z-index: 1000; display: none;">
+                        <div class="user-info" style="display: flex; align-items: center; margin-bottom: calc(15px * var(--s, 1));">
+                            <div class="user-avatar" style="width: calc(52px * var(--s, 1)); height: calc(52px * var(--s, 1)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: calc(22px * var(--s, 1)); margin-right: calc(12px * var(--s, 1)); flex: none;">
+                                <span id="dropdownAvatarText">U</span>
+                            </div>
+                            <div>
+                                <div id="userName" style="font-weight: 600; color: var(--px-text); margin-bottom: calc(4px * var(--s, 1));">用户名</div>
+                                <div id="userId" style="font-size: calc(12px * var(--s, 1)); color: var(--px-text-3);">uid:</div>
+                            </div>
+                        </div>
+                        <button type="button" id="dropdownInviteBtn" class="logout-btn" style="width: 100%; padding: calc(9px * var(--s, 1)); border-radius: calc(8px * var(--s, 1)); font-size: calc(13px * var(--s, 1)); cursor: pointer; transition: all 0.2s ease; margin-bottom: calc(8px * var(--s, 1));" onclick="showInviteModal()">
+                            邀请有礼
+                        </button>
+                        <button type="button" id="dropdownLogoutBtn" class="logout-btn" style="width: 100%; padding: calc(9px * var(--s, 1)); border-radius: calc(8px * var(--s, 1)); font-size: calc(13px * var(--s, 1)); cursor: pointer; transition: all 0.2s ease;" data-i18n="logout">
+                            退出登录
+                        </button>
+                    </div>
+                </div>
+        </div>
+
+        <main class="main-area">
+            <!-- 灵感广场：「灵感」页 / 生成页无作品时的空状态 -->
+            <section id="pxInspire" aria-labelledby="pxHeroTitle">
+                <div class="px-hero">
+                    <span class="px-pill"><span class="px-tag">NEW</span><span data-i18n="pxHeroPill">GPT Image 2.5 已上线，速度优先</span></span>
+                    <h1 id="pxHeroTitle"><span data-i18n="pxHeroTitleA">一句话，生成</span><span class="px-grad" data-i18n="pxHeroTitleB">可商用</span><span data-i18n="pxHeroTitleC">的高清作品</span></h1>
+                    <p data-i18n="pxHeroDesc">汇集 Nano Banana Pro、GPT Image、Seedream 等顶级模型，最高 4K 输出</p>
+                </div>
+                <div class="px-section-head">
+                    <h2 data-i18n="pxInspireTitle">灵感广场</h2>
+                    <span data-i18n="pxInspireHint">点击卡片，一键套用提示词</span>
+                </div>
+                <div class="px-inspire-grid" id="pxInspireGrid"></div>
+            </section>
+            <!-- Grid for Generated Images -->
+            <div id="imagesGrid" class="images-grid">
+                <!-- Image Cards will be injected here -->
+            </div>
+        </main>
+
+        <!-- Bottom Control Bar -->
+        <div class="bottom-bar glass-panel">
+            <!-- Preview row: only image thumbnails -->
+            <div class="preview-strip hidden" id="refsStrip">
+                <div class="ref-images-mini" id="refsMini"></div>
+            </div>
+
+            <!-- Upper layer: Add image + Prompt input -->
+            <div class="bottom-upper">
+                <div class="input-file-btn" id="addImgBtn" data-i18n-title="addReferenceImage">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+                </div>
+                <div id="promptInput" class="prompt-editor" contenteditable="true" data-placeholder="描述你想要的画面，例如：月光下的白衣剑客，水墨山水背景，电影级光影"></div>
+            </div>
+            <!-- Lower layer: Model + Resolution + Generate -->
+            <div class="bottom-lower">
+                <div class="bar-tools">
+                    <!-- Model Dropdown (Custom) - 动态生成 -->
+                    <div class="model-dropdown" id="modelDropdown">
+                        <button class="model-btn" id="modelBtn">
+                            <span id="modelLabel">Banana-Pro</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="model-menu hidden" id="modelMenu">
+                            <!-- 模型选项将从配置文件动态加载 -->
+                            <div style="padding: calc(10px * var(--s, 1)); color: #888; font-size: calc(12px * var(--s, 1)); text-align: center;">加载中...</div>
+                        </div>
+                    </div>
+                    <!-- Combined Aspect + Resolution Dropdown -->
+                    <div class="combo-dropdown" id="comboDropdown">
+                        <button class="combo-btn" id="comboBtn">
+                            <span id="comboLabel">1:1 / 2K</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="combo-menu hidden" id="comboMenu">
+                            <div class="combo-section">
+                                <div class="combo-section-title" data-i18n="ratio">比例</div>
+                                <div class="ratio-grid">
+                                    <div class="ratio-option selected" data-type="aspect" data-value="auto">
+                                        <div class="ratio-icon auto-icon"></div>
+                                        <span>auto</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="21:9">
+                                        <div class="ratio-icon"></div>
+                                        <span>21:9</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="16:9">
+                                        <div class="ratio-icon"></div>
+                                        <span>16:9</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="3:2">
+                                        <div class="ratio-icon"></div>
+                                        <span>3:2</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="4:3">
+                                        <div class="ratio-icon"></div>
+                                        <span>4:3</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="1:1">
+                                        <div class="ratio-icon"></div>
+                                        <span>1:1</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="3:4">
+                                        <div class="ratio-icon"></div>
+                                        <span>3:4</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="2:3">
+                                        <div class="ratio-icon"></div>
+                                        <span>2:3</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="5:4">
+                                        <div class="ratio-icon"></div>
+                                        <span>5:4</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="4:5">
+                                        <div class="ratio-icon"></div>
+                                        <span>4:5</span>
+                                    </div>
+                                    <div class="ratio-option" data-type="aspect" data-value="9:16">
+                                        <div class="ratio-icon"></div>
+                                        <span>9:16</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="combo-section" id="resolutionSection">
+                                <div class="combo-section-title" data-i18n="resolution">分辨率</div>
+                                <div class="combo-option selected" data-type="size" data-value="1K">1K</div>
+                                <div class="combo-option" data-type="size" data-value="2K">2K</div>
+                                <div class="combo-option" data-type="size" data-value="4K">4K</div>
+                            </div>
+                            <div class="combo-section hidden" id="gptQualitySection">
+                                <div class="combo-section-title">画质</div>
+                                <div class="quality-slider-wrap">
+                                    <input id="gptQualitySlider" class="quality-slider" type="range" min="0" max="5" step="1" value="1" aria-label="画质">
+                                    <div class="quality-slider-labels"><span data-quality="low">低</span><span data-quality="medium">中</span><span data-quality="high">高</span><span data-quality="xhigh">极高</span><span data-quality="max">Ultra</span></div>
+                                </div>
+                            </div>
+                            <!-- MJ 专用参数 -->
+                            <div class="combo-section hidden" id="mjParamsSection">
+                                <div class="combo-section-title">MJ 参数</div>
+                                <div class="mj-param-row">
+                                    <label>风格化 (s)</label>
+                                    <input type="range" id="mjStylize" min="0" max="1000" value="100" class="mj-slider">
+                                    <span id="mjStylizeValue">100</span>
+                                </div>
+                                <div class="mj-param-row">
+                                    <label>画质 (q)</label>
+                                    <select id="mjQuality" class="mj-select">
+                                        <option value="0.5">标清 (0.5)</option>
+                                        <option value="1" selected>高清 (1)</option>
+                                        <option value="2">超清 (2)</option>
+                                        <option value="4">实验 (4, 仅V7)</option>
+                                    </select>
+                                </div>
+                                <div class="mj-param-row">
+                                    <label>混乱度 (c)</label>
+                                    <input type="range" id="mjChaos" min="0" max="100" value="0" class="mj-slider">
+                                    <span id="mjChaosValue">0</span>
+                                </div>
+                                <div class="mj-param-row">
+                                    <label>风格</label>
+                                    <select id="mjStyle" class="mj-select">
+                                        <option value="">默认</option>
+                                        <option value="raw">Raw (写实)</option>
+                                    </select>
+                                </div>
+                                <div class="mj-param-row">
+                                    <label>排除元素 (--no)</label>
+                                    <input type="text" id="mjNo" placeholder="水印, 文字, 模糊" class="mj-input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <i class="px-bar-sep"></i>
+                    <button type="button" class="px-assist" onclick="toggleAiChat()" data-i18n-title="chatAssistant" title="创意助手">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg>
+                        <span data-i18n="pxAssist">创意助手</span>
+                    </button>
+                    <button id="quickModeBtn" class="quick-mode-btn mode-slider hidden" type="button" title="快速模式" aria-label="快速模式"><span class="slider-track"><span class="slider-label slider-label-left">正常</span><span class="slider-label slider-label-right">快速</span><span class="slider-thumb"></span></span></button>
+                    <button id="nanoVerBtn" class="nano-ver-btn mode-slider hidden" type="button" title="切换到 2.1 版本" aria-label="切换到 2.1 版本"><span class="slider-track"><span class="slider-label slider-label-left">2.0</span><span class="slider-label slider-label-right">2.1</span><span class="slider-thumb"></span></span></button>
+                    <button id="proModeBtn" class="pro-mode-btn mode-slider hidden" type="button" title="Pro 专业模式" aria-label="Pro 专业模式"><span class="slider-track"><span class="slider-label slider-label-left">标准</span><span class="slider-label slider-label-right">Pro</span><span class="slider-thumb"></span></span></button>
+                <div class="input-actions">
+                    <button class="generate-btn" id="generateBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg>
+                        <span class="counter" id="taskCounter">0.36/图片</span>
+                    </button>
+                </div>
+            </div>
+            <div class="px-hint"><kbd>Enter</kbd> <span data-i18n="pxHintGen">生成</span> · <kbd>Shift + Enter</kbd> <span data-i18n="pxHintBreak">换行</span> · <span data-i18n="pxHintDrop">拖入图片作为参考</span></div>
+        </div>
+    </div>
+
+    <!-- AI聊天侧边栏 -->
+    <div class="ai-chat-sidebar" id="aiChatSidebar">
+        <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <span data-i18n="chatAssistant">创意助手 - 小P</span>
+                <!-- 上下文用量圆环 -->
+                <div class="context-usage-ring" id="contextUsageRing" title="上下文使用量" data-i18n-title="contextUsage">
+                    <svg viewBox="0 0 36 36">
+                        <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="ring-progress" id="contextRingProgress" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    </svg>
+                    <span class="ring-text" id="contextRingText">0%</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="chat-mode-toggle" id="chatSessionsBtn" title="会话列表" data-i18n-title="chatSessions">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="chat-mode-toggle" id="chatNewSessionBtn" title="新建会话" data-i18n-title="newChat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                </button>
+                <button class="chat-mode-toggle" id="chatModeToggle" onclick="toggleChatMode()" title="切换布局模式" data-i18n-title="toggleLayout">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="3" x2="9" y2="21"></line>
+                    </svg>
+                </button>
+                <button class="chat-close" onclick="toggleAiChat()">×</button>
+            </div>
+        </div>
+
+        <!-- 会话列表面板（可折叠） -->
+        <div class="chat-sessions-panel hidden" id="chatSessionsPanel">
+            <div class="chat-sessions-list" id="chatSessionsList"></div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message bot">
+                <div class="message-content">
+                    <span data-i18n="chatWelcome">你好！我是AI创意助手，可以帮你：</span>
+                    <br>• <span data-i18n="chatWelcomeItem1">优化图像提示词</span>
+                    <br>• <span data-i18n="chatWelcomeItem2">推荐合适的模型</span>
+                    <br>• <span data-i18n="chatWelcomeItem3">解答创作问题</span>
+                    <br><br><span data-i18n="chatWelcomeAsk">有什么可以帮你的吗？</span>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-wrapper">
+            <div class="chat-images-strip" id="chatImagesStrip">
+                <div class="chat-images-mini" id="chatImagesMini"></div>
+            </div>
+            <div class="chat-input-area">
+                <input type="file" id="chatImageInput" accept="image/*" multiple style="display: none;">
+                <textarea class="chat-input" id="chatInput" placeholder="输入消息..." data-i18n-placeholder="chatInputPlaceholder" rows="3"></textarea>
+            <div class="chat-input-toolbar">
+                <div class="chat-toolbar-left">
+                    <button class="chat-toolbar-btn brain-mode-btn" id="brainModeBtn" data-mode="normal" title="点击开启思考模式" data-i18n-title="brainModeTip">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- 聚焦/思考图标 - 交叉椭圆中间圆圈 -->
+                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)"/>
+                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-45 12 12)"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    <button class="chat-toolbar-btn chat-image-btn" id="chatImageBtn" title="发送图片（最多3张）" data-i18n-title="sendImageTip">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="chat-toolbar-right">
+                    <button class="chat-send" id="chatSendBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content glass-panel history-modal-content">
+            <div class="modal-header">
+                <h2><span data-i18n="generationHistory">生成历史</span> <span id="historyCount" class="history-count">(0)</span></h2>
+                <div class="modal-header-actions">
+                    <button id="clearHistoryBtn" class="btn-secondary btn-small" data-i18n="clearHistory">清空记录</button>
+                    <button id="closeHistoryBtn" class="close-btn">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body history-body">
+                <div id="historyList" class="history-list">
+                    <!-- 历史记录将在这里显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Favorites Modal -->
+    <div id="favoritesModal" class="modal hidden">
+        <div class="modal-content glass-panel history-modal-content">
+            <div class="modal-header">
+                <h2><span data-i18n="myFavorites">我的收藏</span> <span id="favoritesCount" class="history-count">(0)</span></h2>
+                <div class="modal-header-actions">
+                    <button id="closeFavoritesBtn" class="close-btn">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body history-body">
+                <div id="favoritesList" class="history-list">
+                    <!-- 收藏记录将在这里显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="customConfirmModal" class="modal hidden">
+        <div class="modal-content glass-panel custom-confirm-content">
+            <button id="closeCustomConfirmBtn" class="close-btn custom-confirm-close">&times;</button>
+            <div class="custom-confirm-header">
+                <h3 id="customConfirmTitle" data-i18n="confirmTitle">确认</h3>
+            </div>
+            <div class="custom-confirm-body">
+                <p id="customConfirmMessage"></p>
+                <div class="custom-confirm-buttons">
+                    <button id="customConfirmBtn1" class="custom-confirm-btn btn-cancel"></button>
+                    <button id="customConfirmBtn2" class="custom-confirm-btn btn-confirm"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 data-i18n="settings">设置</h2>
+                <button id="closeSettingsBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="px-set-row">
+                    <div><div class="px-set-title" data-i18n="pxSetLang">界面语言</div><div class="px-set-desc" data-i18n="pxSetLangDesc">切换后立即生效</div></div>
+                    <div class="px-seg">
+                        <button type="button" data-px-lang="zh" onclick="document.getElementById('langZh').click(); pxSyncLangSeg()">中文</button>
+                        <button type="button" data-px-lang="en" onclick="document.getElementById('langEn').click(); pxSyncLangSeg()">English</button>
+                    </div>
+                </div>
+                <div class="px-set-row">
+                    <div><div class="px-set-title" data-i18n="pxSetPs">Photoshop 插件</div><div class="px-set-desc" data-i18n="pxSetPsDesc">在 PS 里直接调用 Pixora 生图</div></div>
+                    <button type="button" class="px-set-btn" onclick="document.getElementById('closeSettingsBtn').click(); document.getElementById('psPluginBtn').click()" data-i18n="pxSetPsBtn">下载插件</button>
+                </div>
+                <div class="input-group" style="display: none;">
+                    <label data-i18n="apiKey">API Key <span id="currentApiLabel" style="color: var(--primary); font-size: calc(12px * var(--s, 1));"></span></label>
+                    <input type="password" id="apiKeySetting">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettingsBtn" class="btn-primary" data-i18n="save">保存</button>
+                <span style="margin-left: calc(10px * var(--s, 1)); color: #666; font-size: calc(12px * var(--s, 1));">v1.0.13</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Editor Modal -->
+    <div id="imageEditorModal" class="modal hidden">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2 data-i18n="imageEditor">图片编辑</h2>
+                <button id="closeEditorBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="editor-toolbar">
+                <div class="toolbar-group">
+                    <button class="tool-btn active" data-tool="select" data-i18n-title="toolSelect">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="text" data-i18n-title="toolText">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                            <line x1="9" y1="20" x2="15" y2="20"></line>
+                            <line x1="12" y1="4" x2="12" y2="20"></line>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="brush" data-i18n-title="toolBrush">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="crop" data-i18n-title="toolCrop">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2">
+                            <rect x="2" y="4" width="20" height="16" rx="1"></rect>
+                        </svg>
+                    </button>
+                </div>
+                <div class="tool-separator"></div>
+                <div class="toolbar-group">
+                    <button class="tool-btn" id="editorUndoBtn" data-i18n-title="toolUndo">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 7v6h6"></path>
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" id="editorRedoBtn" data-i18n-title="toolRedo">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 7v6h-6"></path>
+                            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="tool-separator"></div>
+                <!-- 顶部工具辅助区域：根据当前工具展示不同控件 -->
+                <div class="toolbar-group" id="toolOptionsGroup">
+                    <!-- 选择/移动工具：还原视图 -->
+                    <div class="tool-options" id="moveToolOptions">
+                        <button type="button" class="tool-btn" id="resetViewBtn" data-i18n-title="resetView">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- 画笔工具：笔刷/橡皮 + 颜色 + 大小 -->
+                    <div class="tool-options" id="brushToolOptions">
+                        <div class="brush-mode-group">
+                            <button type="button" class="btn-icon brush-mode-btn active" data-mode="brush" data-i18n-title="brushMode">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn-icon brush-mode-btn" data-mode="eraser" data-i18n-title="eraserMode">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 20H7L3 16c-0.8-0.8-0.8-2 0-2.8l10-10c0.8-0.8 2-0.8 2.8 0l6 6c0.8 0.8 0.8 2 0 2.8L13 21"></path>
+                                    <path d="M6 11l4 4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <label class="color-label" for="colorPicker" data-i18n="color">颜色</label>
+                        <input type="color" id="colorPicker" value="#ffffff" data-i18n-title="color">
+                        <label class="size-label" for="brushSize" data-i18n="size">大小</label>
+                        <input type="range" id="brushSize" min="1" max="50" value="5" data-i18n-title="brushSizeLabel">
+                        <span id="brushSizeLabel">5px</span>
+                        <div class="tool-tip" data-i18n="brushTip">
+                            滚轮缩放画布  中键/右键拖动画布
+                        </div>
+                    </div>
+
+                    <!-- 文字工具：颜色预设 -->
+                    <div class="tool-options" id="textToolOptions">
+                        <div class="text-sub-tool-group">
+                            <button type="button" class="text-sub-btn text-sub-tool active" data-sub-tool="text" data-subtool="text" data-i18n-title="textTool">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                                    <line x1="9" y1="20" x2="15" y2="20"></line>
+                                    <line x1="12" y1="4" x2="12" y2="20"></line>
+                                </svg>
+                            </button>
+                            <button type="button" class="text-sub-btn text-sub-tool" data-sub-tool="arrow" data-subtool="arrow" data-i18n-title="arrowTool">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                            <button type="button" class="text-sub-btn text-sub-tool" data-sub-tool="rect" data-subtool="rect" data-i18n-title="rectTool">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="text-color-presets">
+                            <button type="button" class="text-color-preset-btn" data-color="#ffffff" data-i18n-title="colorWhite" style="background-color: #ffffff; border-color: rgba(255, 255, 255, 0.3);"></button>
+                            <button type="button" class="text-color-preset-btn" data-color="#ff0000" data-i18n-title="colorRed" style="background-color: #ff0000;"></button>
+                            <button type="button" class="text-color-preset-btn" data-color="#ff8800" data-i18n-title="colorOrange" style="background-color: #ff8800;"></button>
+                            <button type="button" class="text-color-preset-btn" data-color="#ffff00" data-i18n-title="colorYellow" style="background-color: #ffff00;"></button>
+                            <button type="button" class="text-color-preset-btn" data-color="#00ff00" data-i18n-title="colorGreen" style="background-color: #00ff00;"></button>
+                            <button type="button" class="text-color-preset-btn" data-color="#0000ff" data-i18n-title="colorBlue" style="background-color: #0000ff;"></button>
+                            <button type="button" class="text-color-preset-btn" data-color="#000000" data-i18n-title="colorBlack" style="background-color: #000000;"></button>
+                        </div>
+                        <div class="tool-tip" data-i18n="textTip">
+                            滚轮缩放大小
+                        </div>
+                    </div>
+
+                    <!-- 裁切工具：裁切比例按钮 -->
+                    <div class="tool-options" id="cropToolOptions">
+                        <span class="ratio-label" data-i18n="cropRatio">裁切比例</span>
+                        <button type="button" class="crop-ratio-btn active" data-ratio="free"><span class="ratio-text" data-i18n="ratioFree">自由</span></button>
+                        <button type="button" class="crop-ratio-btn" data-ratio="1:1" title="1:1">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="1"></rect>
+                            </svg>
+                        </button>
+                        <button type="button" class="crop-ratio-btn" data-ratio="4:3" title="4:3">
+                            <svg width="18" height="14" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="1" width="20" height="16" rx="1"></rect>
+                            </svg>
+                        </button>
+                        <button type="button" class="crop-ratio-btn" data-ratio="3:4" title="3:4">
+                            <svg width="14" height="18" viewBox="0 0 18 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="2" width="16" height="20" rx="1"></rect>
+                            </svg>
+                        </button>
+                        <button type="button" class="crop-ratio-btn" data-ratio="9:16" title="9:16">
+                            <svg width="12" height="18" viewBox="0 0 16 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="2" width="12" height="20" rx="1"></rect>
+                            </svg>
+                        </button>
+                        <button type="button" class="crop-ratio-btn" data-ratio="16:9" title="16:9">
+                            <svg width="18" height="12" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="2" width="20" height="12" rx="1"></rect>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="editor-main-area">
+                <div class="editor-canvas-container">
+                    <canvas id="editorCanvas"></canvas>
+                    <canvas id="brushCanvas"></canvas>
+                    <div id="visualCanvasOverlay" class="visual-canvas-overlay hidden"></div>
+                    <div id="textAreaLayer" class="text-area-layer"></div>
+                    <div id="cropOverlay" class="crop-overlay hidden">
+                        <div id="cropBox" class="crop-box"></div>
+                    </div>
+                </div>
+                <div id="textSidebar" class="text-sidebar hidden">
+                    <div class="text-sidebar-header">
+                        <h3 data-i18n="textEditTitle">文字编辑</h3>
+                    </div>
+                    <div class="text-sidebar-content">
+                        <div class="text-input-group">
+                            <label data-i18n="textContent">文字内容</label>
+                            <textarea id="textInput" rows="3" data-i18n-placeholder="textContentPlaceholder"></textarea>
+                        </div>
+                        <div class="text-input-group">
+                            <label data-i18n="fontSize">字体大小</label>
+                            <input type="range" id="textSize" min="12" max="72" value="30">
+                            <span id="textSizeLabel">30px</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="editor-footer">
+                <button id="cancelEditBtn" class="btn-secondary" data-i18n="cancel">取消</button>
+                <button id="saveEditBtn" class="btn-primary" data-i18n="save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Image Viewer -->
+    <div id="fullscreenViewer" class="fullscreen-viewer hidden">
+        <button class="viewer-close">&times;</button>
+        <div class="viewer-content">
+            <img class="viewer-image" src="" alt="Fullscreen">
+            <div class="viewer-params hidden">
+                <h3 data-i18n="viewerTitle">生成参数</h3>
+                <div class="param-item">
+                    <span class="param-label" data-i18n="viewerModel">模型:</span>
+                    <span class="param-value" id="viewerModel"></span>
+                </div>
+                <div class="param-item">
+                    <span class="param-label" id="viewerAspectLabel" data-i18n="viewerAspectLabel">比例:</span>
+                    <span class="param-value" id="viewerAspect"></span>
+                </div>
+                <div class="param-item">
+                    <span class="param-label" id="viewerSizeLabel" data-i18n="viewerSizeLabel">分辨率:</span>
+                    <span class="param-value" id="viewerSize"></span>
+                </div>
+                <div class="param-item" style="display: flex; align-items: flex-start; flex-wrap: wrap;">
+                    <span class="param-label" data-i18n="viewerPrompt" style="white-space: nowrap;">提示词:</span>
+                    <button id="copyPromptBtn" class="copy-btn" title="复制提示词" data-i18n-title="copyPrompt" style="margin-left: calc(4px * var(--s, 1)); padding: calc(2px * var(--s, 1)) calc(6px * var(--s, 1)); background: rgba(196, 241, 123, 0.1); border: 1px solid rgba(196, 241, 123, 0.3); border-radius: calc(4px * var(--s, 1)); color: var(--primary); font-size: calc(11px * var(--s, 1)); cursor: pointer; display: inline-flex; align-items: center; gap: calc(3px * var(--s, 1)); vertical-align: middle;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span data-i18n="copy">复制</span>
+                    </button>
+                    <span class="param-value" id="viewerPrompt" style="display: block; width: 100%; margin-top: calc(6px * var(--s, 1)); line-height: 1.5;"></span>
+                </div>
+                <div class="param-item" id="viewerRefImages">
+                    <span class="param-label" data-i18n="viewerRefImages">参考图:</span>
+                    <span class="param-value" id="viewerRefCount"></span>
+                </div>
+                <div class="param-item">
+                    <div class="ref-images-container" id="viewerRefImagesContainer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取后端服务器地址
+        function getBackendUrl() {
+            const host = window.location.hostname || 'localhost';
+            const port = window.location.port;
+            // 云端服务器使用 Nginx 80 端口转发，不需要指定后端端口
+            if (window.location.port === '' || window.location.port === '80' || window.location.port === '443') {
+                return `${window.location.protocol}//${host}`;
+            }
+            // 本地开发或其他环境使用 3001 端口
+            return `http://${host}:3001`;
+        }
+
+        // 检测登录状态
+        async function checkLoginStatus() {
+            // 检查localStorage中是否存在登录信息
+            const userStr = localStorage.getItem('nano_user');
+            if (!userStr) {
+                // 未登录，跳转到登录页面
+                window.location.replace('/index.html');
+                return;
+            }
+
+            try {
+                const user = JSON.parse(userStr);
+
+                // 验证用户是否被封禁（使用 user.name/phone 查询，积分服务通过手机号查询）
+                const response = await fetch(`${getBackendUrl()}/api/user/credits`, {
+                    headers: { 'Authorization': 'Bearer ' + (user.token || '') }
+                });
+                // 登录凭证失效（过期或在别处登录被顶掉）：回登录页，避免停留在没有数据的空页面
+                if (response.status === 401) {
+                    localStorage.removeItem('nano_user');
+                    window.location.replace('/index.html');
+                    return;
+                }
+                const data = await response.json();
+
+                if (data.code === 0 && data.data.status === 'blocked') {
+                    // 用户被封禁，清除登录信息并跳转到登录页
+                    localStorage.removeItem('nano_user');
+                    alert('您的账号已被封禁，请联系管理员');
+                    window.location.replace('/index.html');
+                    return;
+                }
+
+                // 已登录且未被封禁，更新头像和用户信息显示
+                updateUserInfo(userStr);
+            } catch (error) {
+                console.error('验证用户状态失败:', error);
+                // 验证失败，仍然显示用户信息（降级处理）
+                updateUserInfo(userStr);
+            }
+        }
+
+        // 更新用户信息
+        function updateUserInfo(userData) {
+            try {
+                const user = JSON.parse(userData);
+                
+                // 更新头像（使用手机号首字母）
+                const avatarText = document.getElementById('avatarText');
+                const dropdownAvatarText = document.getElementById('dropdownAvatarText');
+                if (avatarText && user.phone) {
+                    avatarText.textContent = user.phone.charAt(0).toUpperCase();
+                }
+                if (dropdownAvatarText && user.phone) {
+                    dropdownAvatarText.textContent = user.phone.charAt(0).toUpperCase();
+                }
+                
+                // 更新用户信息
+                const userName = document.getElementById('userName');
+                const userId = document.getElementById('userId');
+                // 用户名位置显示手机号
+                if (userName && user.phone) {
+                    userName.textContent = user.phone;
+                }
+                // 下方显示用户ID
+                if (userId) {
+                    if (user.id) {
+                        userId.textContent = 'uid: ' + user.id;
+                    } else {
+                        userId.textContent = 'uid: -';
+                    }
+                }
+            } catch (error) {
+                console.error('更新用户信息失败:', error);
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            // 清除localStorage中的登录信息
+            localStorage.removeItem('nano_user');
+            // 跳转到登录页面
+            window.location.replace('/index.html');
+        }
+
+        // 切换用户下拉菜单
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        // 点击页面其他地方关闭下拉菜单
+        function closeDropdownOnClickOutside(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userAvatar = document.getElementById('userAvatar');
+            if (dropdown && userAvatar && !dropdown.contains(event.target) && !userAvatar.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // 页面加载时检查登录状态
+        window.onload = async function() {
+            await checkLoginStatus();
+
+            // 绑定用户头像点击事件
+            const userAvatar = document.getElementById('userAvatar');
+            if (userAvatar) {
+                userAvatar.addEventListener('click', toggleUserDropdown);
+            }
+            
+            // 绑定退出登录按钮事件
+            const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+            if (dropdownLogoutBtn) {
+                dropdownLogoutBtn.addEventListener('click', logout);
+            }
+            
+            // 点击页面其他地方关闭下拉菜单
+            document.addEventListener('click', closeDropdownOnClickOutside);
+        };
+    </script>
+    <script>
+        const API_CONFIG = {
+            get baseUrl() {
+                const host = window.location.hostname || 'localhost';
+                // 云端服务器使用 Nginx 80 端口转发，不需要指定后端端口
+                if (window.location.port === '' || window.location.port === '80' || window.location.port === '443') {
+                    return `${window.location.protocol}//${host}`;
+                }
+                return window.location.protocol + '//' + host + ':3001';
+            }
+        };
+    </script>
+    <script src="i18n.js?v=1793760000"></script>
+    <script src="zh2en.map.js?v=1793760000"></script>
+    <script src="zh2en.extra.js?v=1793760000"></script>
+    <script src="zh2en.extra2.js?v=1793760000"></script>
+    <script src="zh2en.extra3.js?v=1793760000"></script>
+    <script src="zh2en.canvas.js?v=1793760000"></script>
+    <script src="i18n-dom.js?v=1793760000"></script>
+    <script src="task-client.js?v=1793760000"></script>
+    <!-- 统一提示词栏模块（与画布共用同一套逻辑） -->
+    <script src="canvas/prompt-bar.js?v=1793760000"></script>
+    <script src="script.js?v=1793760000"></script>
+    <script src="image-editor.js?v=1793760000" async></script>
+    <script>
+        // 初始化国际化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initI18n === 'function') {
+                initI18n();
+            }
+            
+            // 初始化外部链接安全提示拦截器
+            setupExternalLinkInterceptor();
+            
+            // 恢复正在运行的任务
+            if (typeof TaskClient !== 'undefined') {
+                TaskClient.resumeTasks().then(tasks => {
+                    if (tasks.length > 0) {
+                        // console.log('[页面加载] 恢复了', tasks.length, '个运行中的任务');
+                        // 触发任务恢复事件
+                        window.dispatchEvent(new CustomEvent('tasksRestored', { detail: tasks }));
+                    }
+                });
+            }
+        });
+    </script>
+    <script>
+        // AI聊天功能
+        let chatApi = 'provider_c';
+        let chatSelectedImages = [];
+        let isChatProcessing = false; // 标记是否正在处理消息
+        
+        async function sendChatMessage() {
+            // 如果正在处理中，不允许发送新消息
+            if (isChatProcessing) {
+                // console.log('[聊天] 正在处理中，请稍后再试');
+                return;
+            }
+
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            const chatImagesMini = document.getElementById('chatImagesMini');
+            const chatImagesStrip = document.getElementById('chatImagesStrip');
+            const chatSendBtn = document.getElementById('chatSendBtn');
+
+            if (!message && chatSelectedImages.length === 0) return;
+
+            // 标记开始处理
+            isChatProcessing = true;
+
+            // 保存当前图片数据和消息，因为后面要清空
+            const currentImages = [...chatSelectedImages];
+            const currentMessage = message;
+            
+            // 显示发送按钮旋转动画
+            if (chatSendBtn) {
+                chatSendBtn.disabled = true;
+                chatSendBtn.classList.add('sending');
+                chatSendBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                        <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle>
+                    </svg>
+                `;
+            }
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            
+            // 清空输入框和图片
+            input.value = '';
+            input.style.height = 'auto';
+            chatSelectedImages = [];
+            chatImagesMini.innerHTML = '';
+            chatImagesStrip.classList.remove('active');
+            
+            // 添加用户消息（文字+图片一起显示，图片已在上传时预加载）
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-message user';
+            
+            // 显示用户发送的图片（在气泡外）
+            if (currentImages.length > 0) {
+                const imagesContainer = document.createElement('div');
+                imagesContainer.className = 'chat-user-images';
+                currentImages.forEach(imgData => {
+                    const img = document.createElement('img');
+                    // 使用chatUrl（500px大图）显示在聊天界面
+                    if (imgData.chatUrl) {
+                        img.src = getBackendUrl() + '/v1/image/proxy?url=' + encodeURIComponent(imgData.chatUrl);
+                    }
+                    img.style.cssText = 'max-width: 200px; border-radius: 12px; margin: 0 4px 8px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);';
+                    imagesContainer.appendChild(img);
+                });
+                userMsg.appendChild(imagesContainer);
+            }
+            
+            // 文字内容（在气泡内）
+            if (currentMessage) {
+                const textContent = document.createElement('div');
+                textContent.className = 'message-content';
+                textContent.innerHTML = escapeHtml(currentMessage);
+                userMsg.appendChild(textContent);
+            }
+            
+            messagesContainer.appendChild(userMsg);
+            
+            // 等待TOS上传完成，获取持久URL后再发送给AI
+            let imageUrlsForSend = [];
+            let persistentImageUrls = [];
+            if (currentImages.length > 0) {
+                const aiUrls = currentImages.filter(img => img.aiUrl).map(img => img.aiUrl);
+                // aiUrl（4K处理图）发给 AI 用，chatUrl（500px）作预览；一起转存为持久 URL
+                const uploadPairs = [];
+                currentImages.forEach(img => {
+                    if (img.aiUrl) {
+                        uploadPairs.push({ highUrl: img.aiUrl, previewUrl: img.chatUrl || img.aiUrl });
+                    } else if (img.chatUrl) {
+                        uploadPairs.push({ highUrl: img.chatUrl, previewUrl: img.chatUrl });
+                    }
+                });
+
+                if (uploadPairs.length > 0) {
+                    // console.log('[聊天] 等待图片上传到TOS持久化...');
+                    try {
+                        const uploadRes = await fetch(getBackendUrl() + '/v1/image/upload-for-send', {
+                            method: 'POST',
+                            headers: authHeaders({ 'Content-Type': 'application/json' }),
+                            body: JSON.stringify({ imageUrls: uploadPairs })
+                        });
+
+                        if (uploadRes.ok) {
+                            const uploadResult = await uploadRes.json();
+                            if (uploadResult.code === 0 && uploadResult.data && uploadResult.data.urls) {
+                                const urls = uploadResult.data.urls;
+                                persistentImageUrls = urls.map(u => u.highUrl);
+                                // 保存持久URL到消息元素
+                                userMsg.dataset.persistentImageUrls = JSON.stringify(persistentImageUrls);
+                                // 发送给AI：使用转存后的持久 4K 大图（与上传对序一一对应）
+                                imageUrlsForSend = urls.map((u, i) => u.highUrl || uploadPairs[i].highUrl);
+                                // console.log('[聊天] 图片持久化完成，获取', imageUrlsForSend.length, '个持久URL');
+                            }
+                        }
+                    } catch (err) {
+                        console.error('[聊天] 图片持久化上传失败:', err);
+                    }
+                }
+
+                // 转存失败时回退原始 aiUrl（临时链接，总比发不出去强）
+                if (imageUrlsForSend.length === 0 && aiUrls.length > 0) {
+                    imageUrlsForSend = aiUrls;
+                    // console.log('[聊天] 持久化失败，回退使用 aiUrl 发送给AI:', imageUrlsForSend.length, '张图片');
+                }
+            }
+            
+            // 添加loading - 带动画效果
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'chat-message bot loading';
+            loadingMsg.innerHTML = `
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(loadingMsg);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            try {
+                // 使用 API 易 (provider_a.com) API Key
+                // API Key 已移至服务端环境配置，前端不再持有（F01 修复）
+                
+                // 创建消息元素
+                const botMsg = document.createElement('div');
+                botMsg.className = 'chat-message bot';
+                
+                // 消息内容容器
+                const msgContent = document.createElement('div');
+                msgContent.className = 'message-content';
+                
+                // 思考链区域（无框，可展开收起）
+                const thinkSection = document.createElement('div');
+                thinkSection.className = 'think-section';
+                thinkSection.style.display = 'none';
+                thinkSection.innerHTML = '<div class="think-header"><span class="think-icon">💭</span> <span class="think-text">思考中</span><span class="think-dots">...</span> <span class="think-toggle">收起</span></div><div class="think-content"></div>';
+                
+                // 正式回复区域
+                const replyContent = document.createElement('div');
+                replyContent.className = 'reply-content markdown-content';
+                replyContent.style.display = 'none';
+                
+                msgContent.appendChild(thinkSection);
+                msgContent.appendChild(replyContent);
+                botMsg.appendChild(msgContent);
+                
+                // 打字机效果显示文字
+                let displayText = '';
+                let thinkDisplayText = '';
+                let thinkRawText = '';
+                let isThinking = false;
+                let hasThinkContent = false;
+                let typeQueue = [];
+                let thinkTypeQueue = [];
+                let isTyping = false;
+                let isThinkTyping = false;
+                let hasRemovedLoading = false;
+                let replyBuffer = ''; // 累积正式回复内容
+                let streamRenderer = null; // 流式渲染器实例
+                
+                // =====================================================
+                // 流式 Markdown 渲染器
+                // 使用外部的 markdown-stream-renderer.js
+                    
+
+                // 打字机效果函数 - 回复内容
+                
+                async function typeWriter() {
+                    if (isTyping) return;
+                    isTyping = true;
+                    
+                    replyContent.style.display = 'block';
+                    
+                    // 只在第一次创建渲染器，后续复用
+                    if (!streamRenderer) {
+                        streamRenderer = new StreamMarkdownRenderer(replyContent);
+                    }
+                    
+                    while (true) {
+                        if (typeQueue.length === 0) {
+                            await new Promise(r => setTimeout(r, 20));
+                            if (typeQueue.length === 0) break;
+                            continue;
+                        }
+                        
+                        // 每次取一个字符
+                        const char = typeQueue.shift();
+                        streamRenderer.push(char);
+                        
+                        // 小延迟
+                        await new Promise(r => setTimeout(r, 10));
+                    }
+                    
+                    // 最终渲染
+                    streamRenderer.flush();
+                    displayText = streamRenderer.getAccumulatedText();
+                    isTyping = false;
+                    
+                    // 如果队列中还有内容，继续处理（处理新到达的数据）
+                    if (typeQueue.length > 0) {
+                        typeWriter();
+                    }
+                }
+                
+                // 降级方案 - 使用 marked
+                async function typeWriterFallback() {
+                    let accumulatedText = '';
+                    
+                    while (true) {
+                        if (typeQueue.length === 0) {
+                            await new Promise(r => setTimeout(r, 20));
+                            if (typeQueue.length === 0) break;
+                            continue;
+                        }
+                        
+                        let chunk = '';
+                        while (typeQueue.length > 0) {
+                            chunk += typeQueue.shift();
+                        }
+                        
+                        accumulatedText += chunk;
+                        replyContent.innerHTML = renderMarkdown(accumulatedText, false) + '<span class="typing-cursor"></span>';
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                    
+                    replyContent.innerHTML = renderMarkdown(accumulatedText);
+                    displayText = accumulatedText;
+                }
+                
+                // 打字机效果函数 - 思考内容
+                async function thinkTypeWriter() {
+                    if (isThinkTyping || thinkTypeQueue.length === 0) return;
+                    isThinkTyping = true;
+                    
+                    // 批量处理字符，加快显示速度
+                    const batchSize = 10; // 每批处理10个字符
+                    while (thinkTypeQueue.length > 0) {
+                        let batch = '';
+                        for (let i = 0; i < batchSize && thinkTypeQueue.length > 0; i++) {
+                            batch += thinkTypeQueue.shift();
+                        }
+                        thinkDisplayText += batch;
+                        thinkContent.textContent = thinkDisplayText;
+                        thinkContent.scrollTop = thinkContent.scrollHeight;
+                        // 思考内容显示速度更快
+                        await new Promise(r => setTimeout(r, 5));
+                    }
+                    
+                    isThinkTyping = false;
+                }
+                
+                // 思考链展开收起功能
+                const thinkHeader = thinkSection.querySelector('.think-header');
+                const thinkContent = thinkSection.querySelector('.think-content');
+                const thinkToggle = thinkSection.querySelector('.think-toggle');
+                const thinkTextEl = thinkSection.querySelector('.think-text');
+                const thinkDots = thinkSection.querySelector('.think-dots');
+                let isExpanded = true;
+                let dotsAnimation = null;
+                
+                // 波浪动画
+                function startDotsAnimation() {
+                    let dots = 0;
+                    dotsAnimation = setInterval(() => {
+                        dots = (dots + 1) % 4;
+                        thinkDots.textContent = '.'.repeat(dots);
+                    }, 500);
+                }
+                
+                function stopDotsAnimation() {
+                    if (dotsAnimation) {
+                        clearInterval(dotsAnimation);
+                        dotsAnimation = null;
+                    }
+                    thinkDots.style.display = 'none';
+                }
+                
+                thinkHeader.addEventListener('click', () => {
+                    isExpanded = !isExpanded;
+                    thinkContent.style.display = isExpanded ? 'block' : 'none';
+                    thinkToggle.textContent = isExpanded ? '收起' : '展开';
+                });
+                
+                // 使用 fetch 流式读取
+                // 根据模式选择不同的模型
+                const model = chatMode === 'reasoning'
+                    ? 'gemini-3.1-pro-preview-thinking'  // 思考模式 - 原生 thinking 模型
+                    : 'gemini-3.1-flash-lite-preview';   // 普通模式
+                
+                // 获取当前用户ID和会话ID
+                let userId = 'anonymous';
+                try {
+                    const userData = localStorage.getItem('nano_user');
+                    if (userData) {
+                        const user = JSON.parse(userData);
+                        userId = user.id || 'anonymous';
+                    }
+                } catch (e) {
+                    // console.log('[聊天] 获取用户ID失败:', e);
+                }
+                
+                // 构建消息内容 - 后端期望的是 message 字段
+                let requestBody = {
+                    model: model,
+                    userId: userId,
+                    sessionId: currentSessionId,  // 多会话支持
+                    stream: true,
+                    message: currentMessage || (currentImages.length > 0 ? '请分析这张图片' : '')
+                };
+                
+                // 添加图片URL数组（使用上传到TOS后的永久URL）
+                if (imageUrlsForSend.length > 0) {
+                    requestBody.imageUrls = imageUrlsForSend;
+                }
+                
+                // 如果是思考模式，添加 reasoning_effort 参数
+                if (chatMode === 'reasoning') {
+                    requestBody.reasoning_effort = 'medium';
+                }
+                
+                const fetchOptions = {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (JSON.parse(localStorage.getItem('nano_user') || '{}').token || '')
+                    },
+                    body: JSON.stringify(requestBody)
+                };
+                
+                const response = await fetch(API_CONFIG.baseUrl + '/api/chat/chat', fetchOptions);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.msg || '请求失败');
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let sseBuffer = '';  // 半行缓冲：SSE 行可能跨 chunk 截断，直接 split 会丢字
+
+                // 处理单行 SSE 数据
+                const handleSseLine = (line) => {
+                    if (!line.startsWith('data: ')) return;
+                    const data = line.slice(6);
+                    if (data === '[DONE]') return;
+                    try {
+                        const parsed = JSON.parse(data);
+                        // 解析后端推送的真实 token 用量（用于刷新上下文圆环）
+                        if (parsed.usage) {
+                            lastUsageMetadata = parsed.usage;
+                        }
+                        const content = parsed.choices?.[0]?.delta?.content;
+                        if (content) {
+                            // 第一次收到内容时，移除loading并添加消息元素
+                            if (!hasRemovedLoading) {
+                                hasRemovedLoading = true;
+                                loadingMsg.remove();
+                                messagesContainer.appendChild(botMsg);
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            }
+
+                            // 检测 think 标签开始
+                            if (content.includes('<think>')) {
+                                isThinking = true;
+                                thinkSection.style.display = 'block';
+                                thinkContent.style.display = 'block';
+                                startDotsAnimation();
+                            }
+
+                            if (isThinking) {
+                                thinkRawText += content;
+                                // 提取 think 内容（去掉 <think> 标签）
+                                let displayThink = thinkRawText.replace('<think>', '');
+                                // 如果包含结束标签，只显示标签前的内容
+                                const endIdx = displayThink.indexOf('</think>');
+                                if (endIdx !== -1) {
+                                    displayThink = displayThink.substring(0, endIdx);
+                                }
+                                // 去除开头的空白字符（换行、空格等），但只在第一次处理时
+                                if (thinkDisplayText === '') {
+                                    displayThink = displayThink.replace(/^\s+/, '');
+                                }
+                                // 将新字符加入思考打字队列
+                                const newChars = displayThink.substring(thinkDisplayText.length);
+                                if (newChars) {
+                                    for (const char of newChars) {
+                                        thinkTypeQueue.push(char);
+                                    }
+                                    hasThinkContent = true;
+                                    thinkTypeWriter();
+                                }
+                            }
+
+                            // 检测 think 结束
+                            if (content.includes('</think>')) {
+                                isThinking = false;
+                                stopDotsAnimation();
+                                thinkTextEl.textContent = '思考完成';
+                                thinkToggle.textContent = '展开';
+                                thinkContent.style.display = 'none';
+                                isExpanded = false;
+                                // 显示正式回复区域
+                                replyContent.style.display = 'block';
+                                // 提取 </think> 之后的内容
+                                const endIdx = content.indexOf('</think>');
+                                if (endIdx !== -1) {
+                                    const afterThink = content.substring(endIdx + 8); // 8 = '</think>'.length
+                                    if (afterThink) {
+                                        replyBuffer += afterThink;
+                                    }
+                                }
+                            }
+
+                            // 不在 think 标签内时，将内容加入回复缓冲区
+                            if (!isThinking && !content.includes('<think>')) {
+                                replyBuffer += content;
+                                // console.log('[聊天] 普通模式内容:', content.substring(0, 50), 'buffer长度:', replyBuffer.length);
+                            }
+
+                            // 正式回复内容 - 将缓冲区内容加入打字队列
+                            while (replyBuffer.length > 0) {
+                                typeQueue.push(replyBuffer[0]);
+                                replyBuffer = replyBuffer.substring(1);
+                            }
+                            // 启动打字机（如果还没启动且有内容）
+                            if (!isTyping && typeQueue.length > 0) {
+                                typeWriter();
+                            }
+                        }
+                    } catch (e) {}
+                };
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    sseBuffer += decoder.decode(value, { stream: true });
+                    const lines = sseBuffer.split('\n');
+                    sseBuffer = lines.pop();  // 最后一段可能是被截断的半行，留到下一块拼接
+
+                    for (const line of lines) {
+                        handleSseLine(line);
+                    }
+                }
+                // flush 残余的半行数据
+                if (sseBuffer) {
+                    handleSseLine(sseBuffer);
+                    sseBuffer = '';
+                }
+                
+                // 等待打字完成
+                while (typeQueue.length > 0 || isTyping) {
+                    await new Promise(r => setTimeout(r, 50));
+                }
+                
+            } catch (err) {
+                loadingMsg.remove();
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'chat-message bot error';
+                errorMsg.innerHTML = '<div class="message-content">抱歉，' + (err.message || '发生错误') + '</div>';
+                messagesContainer.appendChild(errorMsg);
+            } finally {
+                // 处理完成，重置标志
+                isChatProcessing = false;
+
+                // 恢复发送按钮
+                const chatSendBtn = document.getElementById('chatSendBtn');
+                if (chatSendBtn) {
+                    chatSendBtn.disabled = false;
+                    chatSendBtn.classList.remove('sending');
+                    chatSendBtn.innerHTML = `
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    `;
+                }
+
+                // 刷新上下文用量圆环：
+                //   优先用本次响应的真实 token 用量累加到会话级缓存，
+                //   再重新拉取 /history 获取后端权威 totalTokens（含历史所有轮次）
+                refreshContextRing();
+            }
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+        
+        // 渲染Markdown内容
+        function renderMarkdown(text, inlineOnly = false) {
+            if (!text) return '';
+            
+            // 先让 marked 正常解析 Markdown（包括链接）
+            marked.setOptions({
+                breaks: true,  // 支持换行
+                gfm: true,     // GitHub Flavored Markdown
+                highlight: function(code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (e) {
+                            return code;
+                        }
+                    }
+                    return code;
+                }
+            });
+            
+            // 解析markdown
+            let html;
+            if (inlineOnly) {
+                html = marked.parseInline(text);
+            } else {
+                html = marked.parse(text);
+            }
+            
+            // 处理所有未被 marked 解析的 **...** 格式（匹配不包含**的内容）
+            // 使用惰性匹配，确保只匹配到最近的 **
+            html = html.replace(/\*\*([^\*]+?)\*\*/g, '<strong>$1</strong>');
+            
+            // 给加粗文字左右添加空格，避免粘连（使用半角空格）
+            // 先给所有 strong 后面加空格
+            html = html.replace(/(<strong>[^<]+)(<\/strong>)/g, '$1&ensp;$2');
+            // 再给前面加空格（除了行首的情况：前面是>）
+            html = html.replace(/(<\/[^>]+>|.)(<strong>)/g, function(match, p1, p2) {
+                // 如果前面是标签结束符>，不加空格
+                if (p1 === '>') return match;
+                // 其他情况都加空格
+                return p1 + '&ensp;' + p2;
+            });
+            
+            // 将颜色代码转换为色块显示
+            html = html.replace(/#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/g, function(match, colorCode) {
+                let color = '#' + colorCode;
+                if (colorCode.length === 3) {
+                    color = '#' + colorCode[0] + colorCode[0] + colorCode[1] + colorCode[1] + colorCode[2] + colorCode[2];
+                }
+                return '<span class="color-swatch" style="display: inline-flex; align-items: center; gap: calc(4px * var(--s, 1)); vertical-align: middle; margin-bottom: calc(2px * var(--s, 1));"><span style="display: inline-block; width: calc(16px * var(--s, 1)); height: calc(16px * var(--s, 1)); background-color: ' + color + '; border: 1px solid rgba(255,255,255,0.3); border-radius: calc(3px * var(--s, 1)); flex-shrink: 0;"></span><span style="font-family: monospace; line-height: calc(16px * var(--s, 1));">' + color + '</span></span>';
+            });
+            
+            // 在新窗口打开链接
+            html = html.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
+
+            // XSS 净化（sanitizeHtml 由 markdown-stream-renderer.js 挂到 window）
+            if (typeof window.sanitizeHtml === 'function') {
+                html = window.sanitizeHtml(html);
+            }
+
+            return html;
+        }
+        
+        // 监听API切换，同步聊天API
+        window.addEventListener('apiChanged', function(e) {
+            chatApi = e.detail.api;
+        });
+        
+        // 聊天模式：normal 或 reasoning
+        let chatMode = 'normal';
+        const MAX_CONTEXT_TOKENS = 600000; // 60万上下文上限（与服务端裁剪阈值一致）
+        let lastUsageMetadata = null;  // 缓存最近一次响应的真实 token 用量
+        let currentSessionId = 'default';  // 当前会话 ID（多会话支持）
+        
+        // 获取用户ID
+        function getUserId() {
+            try {
+                const userData = localStorage.getItem('nano_user');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    return user.id || 'anonymous';
+                }
+            } catch (e) {
+                // console.log('[聊天] 获取用户ID失败:', e);
+            }
+            return 'anonymous';
+        }
+        
+        // 加载会话历史 - 分页版本
+        let chatHistoryOffset = 0;
+        let chatHistoryHasMore = false;
+        let isLoadingMoreHistory = false;
+        const CHAT_PAGE_SIZE = 10;
+        
+        async function loadSessionHistory(loadMore = false) {
+            const userId = getUserId();
+            
+            if (loadMore && (!chatHistoryHasMore || isLoadingMoreHistory)) return;
+            
+            isLoadingMoreHistory = true;
+            
+            try {
+                const url = `${API_CONFIG.baseUrl}/api/chat/history?userId=${userId}&sessionId=${currentSessionId}&limit=${CHAT_PAGE_SIZE}&offset=${loadMore ? chatHistoryOffset : 0}`;
+                const response = await fetch(url, { headers: authHeaders() });
+                const result = await response.json();
+                
+                if (result.code === 0) {
+                    if (!loadMore) {
+                        clearChatMessages();
+                        chatHistoryOffset = 0;
+                    }
+                    
+                    chatHistoryHasMore = result.hasMore || false;
+                    
+                    // 显示历史消息
+                    if (result.data && result.data.length > 0) {
+                        const messagesContainer = document.getElementById('chatMessages');
+
+                        // 后端按时间升序返回（旧→新）：
+                        //   - 初始加载：直接用 appendChild 依次追加，最新消息自然落到底部
+                        //   - 加载更多：需反转成新→旧，再用 insertBefore 插到 firstChild 之前，
+                        //     使得更旧的消息出现在容器顶部
+                        const sortedData = loadMore ? [...result.data].reverse() : result.data;
+
+                        // 如果是加载更多，插入到容器顶部
+                        const insertPosition = loadMore ? messagesContainer.firstChild : null;
+                        
+                        sortedData.forEach(item => {
+                            // 用户消息（可能包含图片）
+                            const userMsg = document.createElement('div');
+                            userMsg.className = 'chat-message user';
+                            
+                            // 如果有图片，显示图片（在气泡外）
+                            if (item.images && item.images.length > 0) {
+                                const imagesContainer = document.createElement('div');
+                                imagesContainer.className = 'chat-user-images';
+                                item.images.forEach(imgUrl => {
+                                    const img = document.createElement('img');
+                                    img.src = imgUrl;
+                                    img.style.cssText = 'max-width: 200px; border-radius: 12px; margin: 0 4px 8px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);';
+                                    imagesContainer.appendChild(img);
+                                });
+                                userMsg.appendChild(imagesContainer);
+                            }
+                            
+                            // 添加文字内容（在气泡内）
+                            const textContent = document.createElement('div');
+                            textContent.className = 'message-content';
+                            textContent.innerHTML = escapeHtml(item.question);
+                            userMsg.appendChild(textContent);
+                            
+                            // AI回复（Markdown渲染）
+                            const botMsg = document.createElement('div');
+                            botMsg.className = 'chat-message bot';
+                            const msgContent = document.createElement('div');
+                            msgContent.className = 'message-content markdown-content';
+                            
+                            // 如果有思考链，显示思考链
+                            if (item.think) {
+                                const thinkSection = document.createElement('div');
+                                thinkSection.className = 'think-section';
+                                thinkSection.innerHTML = `
+                                    <div class="think-header">
+                                        <span class="think-icon">💭</span> 
+                                        <span class="think-text">思考完成</span>
+                                        <span class="think-toggle">展开</span>
+                                    </div>
+                                    <div class="think-content" style="display:none">${escapeHtml(item.think)}</div>
+                                `;
+                                msgContent.appendChild(thinkSection);
+                                
+                                // 绑定展开/收起事件
+                                const thinkHeader = thinkSection.querySelector('.think-header');
+                                const thinkContent = thinkSection.querySelector('.think-content');
+                                const thinkToggle = thinkSection.querySelector('.think-toggle');
+                                let isExpanded = false;
+                                thinkHeader.addEventListener('click', () => {
+                                    isExpanded = !isExpanded;
+                                    thinkContent.style.display = isExpanded ? 'block' : 'none';
+                                    thinkToggle.textContent = isExpanded ? '收起' : '展开';
+                                });
+                            }
+                            
+                            // 正式回复内容
+                            const replyContent = document.createElement('div');
+                            replyContent.className = 'reply-content';
+                            replyContent.innerHTML = renderMarkdown(item.answer);
+                            msgContent.appendChild(replyContent);
+                            
+                            // 高亮代码块
+                            msgContent.querySelectorAll('pre code').forEach((block) => {
+                                try {
+                                    if (typeof hljs !== 'undefined') {
+                                        hljs.highlightElement(block);
+                                    }
+                                } catch (e) {
+                                    console.warn('[聊天] 代码高亮失败:', e);
+                                }
+                            });
+                            botMsg.appendChild(msgContent);
+                            
+                            // 插入消息
+                            if (insertPosition) {
+                                messagesContainer.insertBefore(userMsg, insertPosition);
+                                messagesContainer.insertBefore(botMsg, insertPosition);
+                            } else {
+                                messagesContainer.appendChild(userMsg);
+                                messagesContainer.appendChild(botMsg);
+                            }
+                        });
+                        
+                        chatHistoryOffset += result.data.length;
+                        
+                        // 如果是加载更多，保持滚动位置
+                        if (loadMore) {
+                            // 滚动到之前的第一条消息位置，保持阅读位置
+                            if (insertPosition && insertPosition.scrollIntoView) {
+                                insertPosition.scrollIntoView({ behavior: 'auto', block: 'start' });
+                            }
+                        } else {
+                            // 延迟滚动到底部
+                            const currentHeight = messagesContainer.scrollHeight;
+                            setTimeout(() => {
+                                const mc = document.getElementById('chatMessages');
+                                if (mc && mc.scrollHeight > 0) {
+                                    mc.scrollTop = mc.scrollHeight;
+                                }
+                            }, 100);
+                        }
+                    }
+                    
+                    // 更新上下文圆环
+                    const tokens = result.totalTokens || 0;
+                    updateContextRing(tokens);
+                }
+            } catch (e) {
+                console.error('[聊天] 加载会话历史失败:', e);
+            } finally {
+                isLoadingMoreHistory = false;
+            }
+        }
+        
+        // 聊天消息滚动事件 - 滚动到顶部时加载更多
+        function initChatScrollListener() {
+            const messagesContainer = document.getElementById('chatMessages');
+            if (!messagesContainer) return;
+            
+            let isScrolling = false;
+            messagesContainer.addEventListener('scroll', function() {
+                if (isScrolling) return;
+                isScrolling = true;
+                
+                requestAnimationFrame(() => {
+                    // 滚动到顶部附近时加载更多
+                    if (messagesContainer.scrollTop < 50 && chatHistoryHasMore && !isLoadingMoreHistory) {
+                        loadSessionHistory(true);
+                    }
+                    isScrolling = false;
+                });
+            });
+        }
+        
+        // 清空聊天消息
+        function clearChatMessages() {
+            const messagesContainer = document.getElementById('chatMessages');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = `
+                    <div class="chat-message bot">
+                        <div class="message-content">
+                            你好！我是小P，可以帮你：
+                            <br>• 优化图像提示词
+                            <br>• 推荐合适的模型
+                            <br>• 解答创作问题
+                            <br><br>有什么可以帮你的吗？
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 更新上下文用量圆环
+        function updateContextRing(tokens) {
+            const ringProgress = document.getElementById('contextRingProgress');
+            const ringText = document.getElementById('contextRingText');
+
+            if (!ringProgress || !ringText) return;
+
+            const percentage = Math.min((tokens / MAX_CONTEXT_TOKENS) * 100, 100);
+            const dashArray = `${percentage}, 100`;
+
+            ringProgress.setAttribute('stroke-dasharray', dashArray);
+            ringText.textContent = Math.round(percentage) + '%';
+
+            // 根据使用量改变颜色
+            if (percentage < 50) {
+                ringProgress.style.stroke = '#c4f17b'; // 青色
+            } else if (percentage < 80) {
+                ringProgress.style.stroke = '#FFD700'; // 黄色
+            } else {
+                ringProgress.style.stroke = '#FF4646'; // 红色
+            }
+        }
+
+        // 刷新上下文圆环：重新拉取 /history 获取后端权威 totalTokens
+        // 在 sendChatMessage 流结束后调用，确保圆环反映最新累计用量
+        async function refreshContextRing() {
+            try {
+                const userId = getUserId();
+                const url = `${API_CONFIG.baseUrl}/api/chat/history?userId=${userId}&sessionId=${currentSessionId}&limit=1&offset=0`;
+                const response = await fetch(url, { headers: authHeaders() });
+                const result = await response.json();
+                if (result.code === 0) {
+                    const tokens = result.totalTokens || 0;
+                    updateContextRing(tokens);
+                }
+            } catch (e) {
+                console.error('[聊天] 刷新上下文圆环失败:', e);
+            }
+        }
+        
+        // 绑定聊天输入框事件
+        (function bindChatEvents() {
+            const chatInput = document.getElementById('chatInput');
+            const chatSendBtn = document.getElementById('chatSendBtn');
+            const brainModeBtn = document.getElementById('brainModeBtn');
+            
+            // 大脑模式切换按钮事件
+            if (brainModeBtn) {
+                brainModeBtn.addEventListener('click', function() {
+                    if (chatMode === 'normal') {
+                        chatMode = 'reasoning';
+                        brainModeBtn.classList.add('active');
+                        brainModeBtn.setAttribute('data-mode', 'reasoning');
+                        brainModeBtn.setAttribute('title', '点击关闭思考模式');
+                        // console.log('[聊天] 切换到思考模式');
+                    } else {
+                        chatMode = 'normal';
+                        brainModeBtn.classList.remove('active');
+                        brainModeBtn.setAttribute('data-mode', 'normal');
+                        brainModeBtn.setAttribute('title', '点击开启思考模式');
+                        // console.log('[聊天] 切换到普通模式');
+                    }
+                });
+            }
+            
+            if (chatInput) {
+                // 自动调整高度
+                chatInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+                });
+                
+                // 回车发送，Shift+回车换行
+                chatInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendChatMessage();
+                    }
+                });
+            }
+            
+            if (chatSendBtn) {
+                chatSendBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    sendChatMessage();
+                });
+            }
+            
+            // 图片上传功能
+            const chatImageBtn = document.getElementById('chatImageBtn');
+            const chatImageInput = document.getElementById('chatImageInput');
+            const chatImagesStrip = document.getElementById('chatImagesStrip');
+            const chatImagesMini = document.getElementById('chatImagesMini');
+            const MAX_CHAT_IMAGES = 3;
+            
+            // 上传图片到存储云 - 使用本地后端服务
+            // 返回 { previewUrl, chatUrl, aiUrl }
+            async function uploadImageToVolcengine(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                if (window.PxThumb) await window.PxThumb.attach(formData, file);
+
+                // 使用 upload-chat 接口获取聊天图片（返回4种尺寸）
+                const uploadUrl = `${getBackendUrl()}/v1/image/upload-chat`;
+                
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('图片上传失败');
+                }
+                
+                const result = await response.json();
+                if (result.code === 0 && result.data && result.data.aiUrl) {
+                    return {
+                        previewUrl: result.data.previewUrl,
+                        chatUrl: result.data.chatUrl,
+                        aiUrl: result.data.aiUrl
+                    };
+                }
+                throw new Error(result.msg || '图片上传失败');
+            }
+            
+            // 更新图片预览
+            function updateChatImagesPreview() {
+                chatImagesMini.innerHTML = '';
+                if (chatSelectedImages.length > 0) {
+                    chatImagesStrip.classList.add('active');
+                } else {
+                    chatImagesStrip.classList.remove('active');
+                }
+
+                chatSelectedImages.forEach((imgData, index) => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'chat-image-thumb';
+
+                    if (imgData.loading) {
+                        // 加载中状态
+                        imgWrapper.innerHTML = `
+                            <div class="chat-image-loading" style="display:flex;align-items:center;justify-content:center;width:calc(60px * var(--s, 1));height:calc(60px * var(--s, 1));background:#f0f0f0;border-radius:calc(8px * var(--s, 1));">
+                                <div class="loading-spinner" style="width:calc(20px * var(--s, 1));height:calc(20px * var(--s, 1));border:calc(2px * var(--s, 1)) solid #ddd;border-top-color:#00838F;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                            </div>
+                            <button class="chat-image-remove" data-index="${index}">×</button>
+                        `;
+                    } else {
+                        // 使用预览图URL（150px）
+                        const imgSrc = getBackendUrl() + '/v1/image/proxy?url=' + encodeURIComponent(imgData.previewUrl);
+                        imgWrapper.innerHTML = `
+                            <img src="${imgSrc}" alt="图片${index + 1}">
+                            <button class="chat-image-remove" data-index="${index}">×</button>
+                        `;
+                    }
+                    chatImagesMini.appendChild(imgWrapper);
+                });
+
+                // 绑定删除按钮事件
+                chatImagesMini.querySelectorAll('.chat-image-remove').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const index = parseInt(btn.dataset.index);
+                        chatSelectedImages.splice(index, 1);
+                        updateChatImagesPreview();
+                    });
+                });
+            }
+
+            // 添加加载动画样式
+            const chatLoadingStyle = document.createElement('style');
+            chatLoadingStyle.textContent = `
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(chatLoadingStyle);
+            
+            if (chatImageBtn && chatImageInput) {
+                chatImageBtn.addEventListener('click', () => {
+                    if (chatSelectedImages.length >= MAX_CHAT_IMAGES) {
+                        alert('最多只能上传3张图片');
+                        return;
+                    }
+                    chatImageInput.click();
+                });
+                
+                chatImageInput.addEventListener('change', async (e) => {
+                    await handleChatImages(e.target.files);
+                    // 清空input以便再次选择
+                    chatImageInput.value = '';
+                });
+            }
+            
+            // 拖动上传功能
+            const chatMessages = document.getElementById('chatMessages');
+            const aiChatSidebar = document.getElementById('aiChatSidebar');
+            
+            // 创建覆盖层用于捕获拖放事件
+            let dropOverlay = null;
+            
+            if (aiChatSidebar) {
+                // 在侧边栏上监听拖放事件，使用捕获阶段确保优先处理
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    aiChatSidebar.addEventListener(eventName, (e) => {
+                        // 只有侧边栏打开时才处理
+                        if (!aiChatSidebar.classList.contains('open')) return;
+                        
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, true); // 使用捕获阶段
+                });
+                
+                // 拖入侧边栏时创建覆盖层
+                aiChatSidebar.addEventListener('dragenter', (e) => {
+                    if (!aiChatSidebar.classList.contains('open')) return;
+                    
+                    if (!dropOverlay) {
+                        dropOverlay = document.createElement('div');
+                        dropOverlay.style.cssText = `
+                            position: fixed;
+                            top: 0;
+                            right: 0;
+                            width: ${aiChatSidebar.offsetWidth}px;
+                            height: 100vh;
+                            background: rgba(196, 241, 123, 0.15);
+                            border: 2px dashed #c4f17b;
+                            z-index: 9999999999;
+                            pointer-events: none;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 18px;
+                            color: #c4f17b;
+                        `;
+                        dropOverlay.textContent = '释放以上传图片';
+                        document.body.appendChild(dropOverlay);
+                    }
+                }, true);
+                
+                // 在侧边栏内移动时保持覆盖层
+                aiChatSidebar.addEventListener('dragover', (e) => {
+                    if (!aiChatSidebar.classList.contains('open')) return;
+                    e.preventDefault();
+                }, true);
+                
+                // 离开侧边栏时移除覆盖层
+                aiChatSidebar.addEventListener('dragleave', (e) => {
+                    if (!aiChatSidebar.classList.contains('open')) return;
+                    // 检查是否真的离开了侧边栏
+                    const rect = aiChatSidebar.getBoundingClientRect();
+                    const x = e.clientX;
+                    const y = e.clientY;
+                    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+                        if (dropOverlay) {
+                            dropOverlay.remove();
+                            dropOverlay = null;
+                        }
+                    }
+                }, true);
+                
+                // 在侧边栏内释放时处理文件
+                aiChatSidebar.addEventListener('drop', async (e) => {
+                    if (!aiChatSidebar.classList.contains('open')) return;
+                    
+                    if (dropOverlay) {
+                        dropOverlay.remove();
+                        dropOverlay = null;
+                    }
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        await handleChatImages(files);
+                    }
+                }, true);
+            }
+            
+            // 原有的chatMessages拖放处理（作为备用）
+            if (chatMessages) {
+                // 拖入时显示视觉反馈
+                chatMessages.addEventListener('dragenter', () => {
+                    chatMessages.style.background = 'rgba(196, 241, 123, 0.1)';
+                });
+                
+                chatMessages.addEventListener('dragleave', () => {
+                    chatMessages.style.background = '';
+                });
+                
+                // 处理拖放文件
+                chatMessages.addEventListener('drop', async (e) => {
+                    chatMessages.style.background = '';
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        await handleChatImages(files);
+                    }
+                });
+            }
+            
+            // 复制粘贴上传功能
+            document.addEventListener('paste', async (e) => {
+                // 检查AI聊天侧边栏是否打开
+                const sidebar = document.getElementById('aiChatSidebar');
+                if (!sidebar || !sidebar.classList.contains('open')) return;
+                
+                // 检查当前焦点是否在聊天输入框中
+                const activeElement = document.activeElement;
+                const chatInput = document.getElementById('chatInput');
+                if (!chatInput || (activeElement !== chatInput && !chatInput.contains(activeElement))) {
+                    return;
+                }
+                
+                const items = e.clipboardData.items;
+                const imageFiles = [];
+                
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        if (blob) {
+                            imageFiles.push(blob);
+                        }
+                    }
+                }
+                
+                if (imageFiles.length > 0) {
+                    await handleChatImages(imageFiles);
+                }
+            });
+            
+            // 处理聊天图片的通用函数
+            async function handleChatImages(files) {
+                const remainingSlots = MAX_CHAT_IMAGES - chatSelectedImages.length;
+                if (remainingSlots <= 0) {
+                    alert('最多只能上传3张图片');
+                    return;
+                }
+                
+                const filesToProcess = Array.from(files).slice(0, remainingSlots);
+                
+                for (const file of filesToProcess) {
+                    if (!file.type.startsWith('image/')) continue;
+
+                    // 添加到列表，显示加载状态
+                    const imgData = {
+                        file: file,
+                        loading: true  // 加载中状态
+                    };
+                    chatSelectedImages.push(imgData);
+                    updateChatImagesPreview();
+
+                    try {
+                        // 直接上传原图
+                        const uploadResult = await uploadImageToVolcengine(file);
+                        imgData.previewUrl = uploadResult.previewUrl;  // 150px预览图（上传区域）
+                        imgData.chatUrl = uploadResult.chatUrl;        // 500px大图（聊天区域）
+                        imgData.aiUrl = uploadResult.aiUrl;            // 质量80%（发送给AI）
+                        imgData.loading = false;
+                        
+                        // 上传完成后立即预加载图片（用于聊天显示）
+                        if (imgData.chatUrl) {
+                            const preloadImg = new Image();
+                            preloadImg.src = getBackendUrl() + '/v1/image/proxy?url=' + encodeURIComponent(imgData.chatUrl);
+                            imgData.preloaded = preloadImg; // 保存预加载对象
+                        }
+                        
+                        // 刷新预览图显示
+                        updateChatImagesPreview();
+                    } catch (error) {
+                        console.error('[聊天] 图片处理失败:', error);
+                        alert('图片处理失败: ' + error.message);
+                        // 移除失败的图片
+                        const index = chatSelectedImages.indexOf(imgData);
+                        if (index > -1) {
+                            chatSelectedImages.splice(index, 1);
+                            updateChatImagesPreview();
+                        }
+                    }
+                }
+            }
+            
+            // === 多会话管理 ===
+            const chatSessionsBtn = document.getElementById('chatSessionsBtn');
+            const chatNewSessionBtn = document.getElementById('chatNewSessionBtn');
+            const chatSessionsPanel = document.getElementById('chatSessionsPanel');
+            const chatSessionsList = document.getElementById('chatSessionsList');
+
+            // 加载会话列表并渲染到面板
+            async function loadChatSessions() {
+                try {
+                    const userId = getUserId();
+                    const url = `${API_CONFIG.baseUrl}/api/chat/sessions?userId=${userId}`;
+                    const response = await fetch(url, { headers: authHeaders() });
+                    const result = await response.json();
+                    if (result.code === 0 && Array.isArray(result.data)) {
+                        renderChatSessions(result.data);
+                        return result.data;
+                    }
+                } catch (e) {
+                    console.error('[聊天] 加载会话列表失败:', e);
+                }
+                return null;
+            }
+
+            // 拉取会话列表（不渲染）
+            async function fetchChatSessions() {
+                try {
+                    const userId = getUserId();
+                    const url = `${API_CONFIG.baseUrl}/api/chat/sessions?userId=${userId}`;
+                    const response = await fetch(url, { headers: authHeaders() });
+                    const result = await response.json();
+                    if (result.code === 0 && Array.isArray(result.data)) return result.data;
+                } catch (e) {
+                    console.error('[聊天] 拉取会话列表失败:', e);
+                }
+                return null;
+            }
+
+            // 渲染会话列表项
+            function renderChatSessions(sessions) {
+                if (!chatSessionsList) return;
+                chatSessionsList.innerHTML = '';
+                if (sessions.length === 0) {
+                    chatSessionsList.innerHTML = '<div class="chat-session-empty">暂无会话</div>';
+                    return;
+                }
+                sessions.forEach(session => {
+                    const item = document.createElement('div');
+                    item.className = 'chat-session-item' + (session.id === currentSessionId ? ' active' : '');
+                    item.dataset.sessionId = session.id;
+
+                    const nameSpan = document.createElement('div');
+                    nameSpan.className = 'chat-session-name';
+                    nameSpan.textContent = session.name || '新对话';
+                    nameSpan.title = session.name || '新对话';
+                    item.appendChild(nameSpan);
+
+                    // 删除按钮（default 会话不允许删除）
+                    const delBtn = document.createElement('button');
+                        delBtn.className = 'chat-session-delete';
+                        delBtn.innerHTML = '×';
+                        delBtn.title = '删除会话';
+                        delBtn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (!confirm('确定删除此会话？所有历史记录将被清除。')) return;
+                            try {
+                                const userId = getUserId();
+                                const url = `${API_CONFIG.baseUrl}/api/chat/sessions/${session.id}?userId=${userId}`;
+                                const response = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+                                const result = await response.json();
+                                if (result.code === 0) {
+                                    // 如果删除的是当前会话
+                                    if (session.id === currentSessionId) {
+                                        // 看看还剩哪些会话
+                                        const remaining = await fetchChatSessions();
+                                        if (Array.isArray(remaining) && remaining.length > 0) {
+                                            // 还有会话：回到最近聊天的那个
+                                            await switchSession(remaining[0].id);
+                                        } else {
+                                            // 最后一个会话被删除：自动新建一个新对话
+                                            await createNewSession();
+                                        }
+                                    }
+                                    await loadChatSessions();
+                                } else {
+                                    alert(result.msg || '删除失败');
+                                }
+                            } catch (e) {
+                                console.error('[聊天] 删除会话失败:', e);
+                                alert('删除失败: ' + e.message);
+                            }
+                        });
+                        item.appendChild(delBtn);
+
+                    // 点击切换会话
+                    item.addEventListener('click', () => {
+                        switchSession(session.id);
+                    });
+
+                    chatSessionsList.appendChild(item);
+                });
+            }
+
+            // 切换会话
+            async function switchSession(sessionId) {
+                if (sessionId === currentSessionId) {
+                    toggleSessionsPanel(false);
+                    return;
+                }
+                currentSessionId = sessionId;
+                chatHistoryOffset = 0;
+                chatHistoryHasMore = false;
+                clearChatMessages();
+                await loadSessionHistory();
+                toggleSessionsPanel(false);
+                await loadChatSessions();  // 更新激活态
+            }
+
+            // 新建会话
+            async function createNewSession() {
+                try {
+                    const userId = getUserId();
+                    const url = `${API_CONFIG.baseUrl}/api/chat/sessions?userId=${userId}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: authHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify({ name: '新对话' })
+                    });
+                    const result = await response.json();
+                    if (result.code === 0 && result.data) {
+                        await switchSession(result.data.id);
+                    }
+                } catch (e) {
+                    console.error('[聊天] 新建会话失败:', e);
+                    alert('新建会话失败: ' + e.message);
+                }
+            }
+
+            // 切换会话列表面板显隐
+            function toggleSessionsPanel(force) {
+                if (!chatSessionsPanel) return;
+                const show = force === undefined
+                    ? chatSessionsPanel.classList.contains('hidden')
+                    : force;
+                if (show) {
+                    chatSessionsPanel.classList.remove('hidden');
+                    loadChatSessions();
+                } else {
+                    chatSessionsPanel.classList.add('hidden');
+                }
+            }
+
+            if (chatSessionsBtn) {
+                chatSessionsBtn.addEventListener('click', () => toggleSessionsPanel());
+            }
+            if (chatNewSessionBtn) {
+                chatNewSessionBtn.addEventListener('click', createNewSession);
+            }
+
+            // 点击会话面板外区域关闭面板
+            document.addEventListener('click', (e) => {
+                if (!chatSessionsPanel || chatSessionsPanel.classList.contains('hidden')) return;
+                if (!chatSessionsPanel.contains(e.target) &&
+                    !chatSessionsBtn.contains(e.target)) {
+                    chatSessionsPanel.classList.add('hidden');
+                }
+            });
+
+            // 启动恢复：优先打开最近聊天的会话（服务器按 updatedAt 降序），而不是写死的 default
+            (async () => {
+                const sessions = await fetchChatSessions();
+                if (Array.isArray(sessions) && sessions.length > 0) {
+                    currentSessionId = sessions[0].id;
+                    renderChatSessions(sessions);  // 正确高亮当前会话
+                }
+                loadSessionHistory();
+            })();
+
+            // 初始化滚动监听
+            initChatScrollListener();
+
+            // 初始化聊天布局模式
+            initChatMode();
+        })();
+    </script>
+    
+    <!-- @图片选择下拉菜单 - 放在body末尾避免父元素影响fixed定位 -->
+    <div class="image-select-dropdown hidden" id="imageSelectDropdown">
+        <div class="dropdown-content horizontal" id="dropdownImages"></div>
+    </div>
+
+    <!-- PS 插件介绍弹窗 -->
+    <div id="psPluginModal" class="px-mask" style="display:none;">
+        <div class="px-dialog px-dialog-ps" role="dialog" aria-modal="true" aria-labelledby="psDlgTitle">
+            <button type="button" class="px-dialog-x" onclick="closePsPluginModal()" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <div class="px-dialog-head">
+                <div class="px-dialog-icon px-icon-ps">Ps</div>
+                <div>
+                    <div class="px-dialog-title" id="psDlgTitle">Pixora AI · PS 插件</div>
+                    <div class="px-dialog-sub">Photoshop 2020 – 2026 扩展面板</div>
+                </div>
+            </div>
+            <p class="px-dialog-text">在 Photoshop 里直接调用本站 AI 生成与精修能力：选区局部编辑、整图重绘、自动回填对齐，生图结果一键导回画布。</p>
+            <ol class="px-steps">
+                <li><b>下载安装器</b><span>点击下方按钮，保存压缩包并解压</span></li>
+                <li><b>运行安装</b><span>双击解压出的 Pixora安装器.exe，自动完成安装</span></li>
+                <li><b>打开面板</b><span>重启 Photoshop，窗口 → 扩展功能 → Pixora AI</span></li>
+                <li><b>登录使用</b><span>用本站账号密码登录即可</span></li>
+            </ol>
+            <div class="px-dialog-note">支持 Windows 版 Photoshop 2020–2026（21.x–27.x）。插件会自动检查更新，有新版本时在面板内一键升级。</div>
+            <div class="px-dialog-note" style="margin-top:8px;">插件提示“未经正确签署”无法加载？<a href="/pixora-dist/Pixora-Fix.zip" download style="color:inherit;font-weight:600;text-decoration:underline;margin-left:4px;">下载修复工具</a><br><span>解压后双击 Pixora修复.bat，然后重启 Photoshop</span></div>
+            <div class="px-dialog-actions">
+                <button type="button" class="px-btn px-btn-ghost" onclick="closePsPluginModal()">关闭</button>
+                <button type="button" class="px-btn px-btn-primary" onclick="downloadPlugin()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载安装器
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+    function showPsPluginModal(){var m=document.getElementById('psPluginModal');m.style.display='flex';}
+    function closePsPluginModal(){var m=document.getElementById('psPluginModal');m.style.display='none';}
+    async function downloadPlugin(){
+        var user={};
+        try{user=JSON.parse(localStorage.getItem('nano_user')||'{}');}catch(e){}
+        if(!user.token){alert('请先登录后再下载插件');window.location.href='/index.html';return;}
+        try{
+            var resp=await fetch('/pixora-dist/Pixora-Setup.zip',{headers:{'Authorization':'Bearer '+user.token}});
+            if(resp.status===401){alert('登录已过期，请重新登录后再下载');window.location.href='/index.html';return;}
+            if(!resp.ok){alert('下载失败（'+resp.status+'），请稍后重试');return;}
+            var blob=await resp.blob();
+            var url=URL.createObjectURL(blob);
+            var a=document.createElement('a');
+            a.href=url;a.download='Pixora安装器.zip';
+            document.body.appendChild(a);a.click();a.remove();
+            URL.revokeObjectURL(url);
+        }catch(err){alert('下载出错：'+err.message);}
+    }
+    document.getElementById('psPluginModal').addEventListener('click',function(e){if(e.target===this)closePsPluginModal();});
+    </script>
+    <div id="inviteModal" class="px-mask" style="display:none;">
+        <div class="px-dialog px-dialog-cdk" role="dialog" aria-modal="true" aria-labelledby="inviteDlgTitle">
+            <button type="button" class="px-dialog-x" onclick="closeInviteModal()" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <div class="px-dialog-head">
+                <div class="px-dialog-icon px-icon-coin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg></div>
+                <div>
+                    <div class="px-dialog-title" id="inviteDlgTitle">邀请有礼</div>
+                    <div class="px-dialog-sub">好友注册得积分，你拿充值返利</div>
+                </div>
+            </div>
+            <div id="inviteBody" class="px-dialog-msg">加载中...</div>
+            <div id="inviteStats" style="display:none;">
+                <div class="px-field" style="display:flex;align-items:center;gap:calc(8px * var(--s, 1));">
+                    <input id="inviteCodeText" class="px-input" readonly style="flex:1;font-family:monospace;letter-spacing:2px;text-align:center;font-size:calc(18px * var(--s, 1));" value="">
+                    <button type="button" class="px-btn px-btn-primary" id="inviteCopyBtn" onclick="copyInviteCode()" style="white-space:nowrap;">复制</button>
+                </div>
+                <div style="display:flex;gap:calc(10px * var(--s, 1));margin-top:calc(12px * var(--s, 1));">
+                    <div style="flex:1;background:var(--px-surface-2,#f7f8fa);border-radius:calc(8px * var(--s, 1));padding:calc(10px * var(--s, 1));text-align:center;">
+                        <div style="font-size:calc(12px * var(--s, 1));color:var(--px-text-3);">已邀请</div>
+                        <div id="inviteCount" style="font-weight:600;font-size:calc(15px * var(--s, 1));margin-top:calc(2px * var(--s, 1));">0 / 50</div>
+                    </div>
+                    <div style="flex:1;background:var(--px-surface-2,#f7f8fa);border-radius:calc(8px * var(--s, 1));padding:calc(10px * var(--s, 1));text-align:center;">
+                        <div style="font-size:calc(12px * var(--s, 1));color:var(--px-text-3);">累计返利</div>
+                        <div id="inviteRebate" style="font-weight:600;font-size:calc(15px * var(--s, 1));margin-top:calc(2px * var(--s, 1));">0 积分</div>
+                    </div>
+                </div>
+                <div style="margin-top:calc(12px * var(--s, 1));font-size:calc(12px * var(--s, 1));line-height:1.7;color:var(--px-text-3);">
+                    好友用你的邀请码注册，好友立得 10 积分；<br>
+                    好友每次充值，你可获得 5% 积分，单次最高 2000 积分；<br>
+                    每人最多邀请 50 人。
+                </div>
+            </div>
+            <div class="px-dialog-actions">
+                <button type="button" class="px-btn px-btn-ghost" onclick="closeInviteModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    function showInviteModal(){
+        var m=document.getElementById('inviteModal');m.style.display='flex';
+        var body=document.getElementById('inviteBody');
+        var stats=document.getElementById('inviteStats');
+        body.style.display='block';body.textContent='加载中...';stats.style.display='none';
+        var user={};try{user=JSON.parse(localStorage.getItem('nano_user')||'{}');}catch(e){}
+        if(user.token===undefined||user.token===null||user.token===''){body.textContent='请先登录后重试';return;}
+        fetch(getBackendUrl()+'/api/invite/me',{headers:{'Authorization':'Bearer '+user.token}})
+            .then(function(r){return r.json();})
+            .then(function(d){
+                if(d&&d.code===0&&d.data){
+                    document.getElementById('inviteCodeText').value=d.data.code||'';
+                    document.getElementById('inviteCount').textContent=(d.data.invited||0)+' / '+(d.data.maxInvites||50);
+                    document.getElementById('inviteRebate').textContent=(d.data.rebateTotal||0)+' 积分';
+                    body.style.display='none';stats.style.display='block';
+                }else{
+                    body.textContent=(d&&d.msg)||'加载失败';
+                }
+            })
+            .catch(function(){body.textContent='网络错误，请稍后重试';});
+    }
+    function closeInviteModal(){document.getElementById('inviteModal').style.display='none';}
+    function copyInviteCode(){
+        var el=document.getElementById('inviteCodeText');
+        var txt=(el&&el.value)||'';
+        if(!txt)return;
+        var btn=document.getElementById('inviteCopyBtn');
+        var done=function(){if(btn){btn.textContent='已复制';setTimeout(function(){btn.textContent='复制';},1500);}};
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+            navigator.clipboard.writeText(txt).then(done).catch(function(){el.select();document.execCommand('copy');done();});
+        }else{el.select();document.execCommand('copy');done();}
+    }
+    document.getElementById('inviteModal').addEventListener('click',function(e){if(e.target===this)closeInviteModal();});
+    </script>
+
+    <link rel="stylesheet" href="pxl/ui.css?v=1793760000">
+    <script src="pxl/ui.js?v=1793760000"></script>
+</body>
+</html>

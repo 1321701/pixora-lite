@@ -1,0 +1,99 @@
+/* Pixora 自部署版 —— 附加界面（接口设置 / 专业功能引导 / 署名）Copyright (c) 2026 Pixora */
+
+/* 自部署版没有账号与积分：隐藏充值、积分、邀请、插件、登录相关入口与价格显示 */
+#inviteEntryBtn, #psPluginBtn, #creditsDisplay, .px-recharge, .user-menu,
+#dropdownLogoutBtn, #dropdownInviteBtn, #taskCounter, .task-counter,
+#psPluginModal, #inviteModal { display: none !important; }
+
+.pxl-bar { display: inline-flex; align-items: center; gap: 8px; }
+.pxl-btn {
+    display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+    border-radius: 16px; border: 1px solid var(--px-line-strong, rgba(255,255,255,.14));
+    background: var(--px-panel-2, #1b1b1f); color: var(--px-text, #ececef);
+    font-size: 12.5px; cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.pxl-btn:hover { border-color: var(--px-lime, #c4f17b); }
+.pxl-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pxl-btn .pxl-dot { width: 7px; height: 7px; border-radius: 50%; background: #6c6c75; flex-shrink: 0; }
+.pxl-btn.ok .pxl-dot { background: #5ad17d; }
+.pxl-btn.err .pxl-dot { background: #f07a7a; }
+.pxl-btn .pxl-host { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.pxl-pro { background: var(--px-lime, #c4f17b); color: #11140a; border-color: transparent; font-weight: 600; }
+.pxl-pro:hover { filter: brightness(1.06); border-color: transparent; }
+
+.pxl-menu { position: fixed; z-index: 100001; min-width: 230px; padding: 6px; border-radius: 12px; background: #1b1b1f; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+.pxl-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none; border-radius: 8px; background: none; color: #ececef; font-size: 13px; text-align: left; cursor: pointer; font-family: inherit; }
+.pxl-menu-item:hover { background: rgba(255,255,255,.06); }
+.pxl-menu-item small { display: block; color: #8a8a93; font-size: 11.5px; margin-top: 2px; }
+.pxl-menu-item svg { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: var(--px-lime, #c4f17b); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pxl-menu-sep { height: 1px; margin: 4px 6px; background: rgba(255,255,255,.08); }
+
+.pxl-powered { position: fixed; right: 14px; bottom: 4px; z-index: 50; font-size: 11px; color: rgba(255,255,255,.38); text-decoration: none; pointer-events: auto; }
+.pxl-powered:hover { color: var(--px-lime, #c4f17b); }
+.pxl-powered b { font-weight: 600; }
+
+.pxl-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 100002; padding: 8px 14px; background: #3a2a14; color: #ffd28a; font-size: 13px; text-align: center; border-bottom: 1px solid rgba(255,210,138,.3); }
+
+.pxl-mask { position: fixed; inset: 0; z-index: 100000; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+.pxl-mask[hidden] { display: none; }
+.pxl-card { position: relative; width: min(1360px, calc(100vw - 40px)); max-height: calc(100vh - 32px); overflow-y: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,.14); background: #141417; color: #ececef; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.pxl-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 6px; font-weight: 700; font-size: 16px; }
+.pxl-x { width: 30px; height: 30px; border: none; border-radius: 8px; background: none; color: #a3a3ab; font-size: 20px; cursor: pointer; }
+.pxl-x:hover { background: rgba(255,255,255,.06); color: #fff; }
+.pxl-body { padding: 6px 18px 12px; }
+.pxl-field { display: flex; flex-direction: column; gap: 6px; }
+.pxl-field > span { font-size: 12px; color: #a3a3ab; }
+.pxl-field input, .pxl-field textarea, .pxl-field select { width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 9px; border: 1px solid rgba(255,255,255,.14); background: #0c0c0e; color: #ececef; outline: none; font: inherit; font-size: 13px; resize: vertical; }
+.pxl-field input:focus, .pxl-field textarea:focus, .pxl-field select:focus { border-color: var(--px-lime, #c4f17b); }
+/* 输入框默认文字（placeholder）：细体低透明度 */
+.pxl-card input::placeholder, .pxl-card textarea::placeholder { color: rgba(236,236,239,.32); font-weight: 300; opacity: 1; }
+.pxl-field input:disabled { opacity: .6; }
+.pxl-hint { font-size: 12px; color: #6c6c75; line-height: 1.6; margin-top: -4px; }
+.pxl-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pxl-msg { font-size: 12px; color: #a3a3ab; }
+.pxl-msg.ok { color: #5ad17d; } .pxl-msg.err { color: #f07a7a; }
+.pxl-primary { height: 36px; padding: 0 16px; border-radius: 10px; border: none; background: var(--px-lime, #c4f17b); color: #11140a; font-weight: 600; cursor: pointer; font: inherit; font-weight: 600; }
+.pxl-primary:disabled { opacity: .5; cursor: wait; }
+.pxl-ghost { height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: #a3a3ab; cursor: pointer; font: inherit; }
+.pxl-ghost:hover { color: #fff; }
+.pxl-foot { display: flex; align-items: center; gap: 8px; padding: 12px 18px 16px; border-top: 1px solid rgba(255,255,255,.08); }
+.pxl-sp { flex: 1; }
+.pxl-models { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pxl-stat { padding: 10px; border-radius: 10px; background: #0c0c0e; border: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #a3a3ab; }
+.pxl-stat b { display: block; font-size: 18px; color: #ececef; margin-bottom: 2px; }
+.pxl-card details summary { cursor: pointer; color: #a3a3ab; font-size: 12.5px; }
+.pxl-card details[open] summary { margin-bottom: 10px; }
+
+.pxl-up { width: 420px; padding: 28px 26px 22px; text-align: center; }
+.pxl-up-ic { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 16px; display: grid; place-items: center; background: var(--px-lime, #c4f17b); color: #11140a; }
+.pxl-up-ic svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pxl-up h3 { margin: 0; font-size: 19px; }
+.pxl-up p { margin: 8px 0 0; color: #a3a3ab; line-height: 1.7; font-size: 13.5px; }
+.pxl-up ul { list-style: none; margin: 16px 0 20px; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.pxl-up li::before { content: '✓'; color: var(--px-lime, #c4f17b); margin-right: 8px; font-weight: 700; }
+.pxl-up .pxl-primary { width: 100%; height: 42px; }
+.pxl-up .pxl-x { position: absolute; top: 10px; right: 10px; }
+.pxl-up small { display: block; margin-top: 10px; color: #6c6c75; font-size: 12px; }
+
+.pxl-mlist { max-height: 190px; overflow-y: auto; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; padding: 4px; background: #0c0c0e; }
+.pxl-mrow { display: flex; align-items: center; gap: 8px; padding: 3px 4px; }
+.pxl-mid { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: #ececef; }
+.pxl-mrow select { width: 110px; flex-shrink: 0; padding: 4px 6px; border-radius: 7px; border: 1px solid rgba(255,255,255,.14); background: #141417; color: #ececef; font-size: 12px; outline: none; }
+/* 弹窗主体三列（大屏）：连接配置 / 模型列表 / 能力与高级；能力列分最大份额；窄屏折列 */
+.pxl-body { padding: 6px 18px 12px; display: grid; grid-template-columns: 0.85fr 0.95fr 1.5fr; gap: 10px 24px; align-items: start; }
+.pxl-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 1100px) { .pxl-body { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) { .pxl-body { grid-template-columns: 1fr; } }
+.pxl-cid { flex: 1 1 auto; min-width: 0; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #ececef; }
+.pxl-crow { display: flex; align-items: center; gap: 5px; padding: 3px 4px; border-bottom: 1px solid rgba(255,255,255,.04); min-width: 0; }
+.pxl-crow:last-child { border-bottom: none; }
+.pxl-crow.pxl-coff { opacity: .45; }
+.pxl-crow input[type="number"] { width: 48px; flex-shrink: 0; padding: 3px 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,.14); background: #141417; color: #ececef; font-size: 12px; outline: none; }
+.pxl-crow input[type="text"] { flex: 1; min-width: 0; padding: 3px 5px; border-radius: 6px; border: 1px solid rgba(255,255,255,.14); background: #141417; color: #ececef; font-size: 12px; outline: none; }
+.pxl-crow input[type="checkbox"] { flex-shrink: 0; accent-color: var(--px-lime, #c4f17b); }
+.pxl-crow label { display: flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 11.5px; color: #a3a3ab; }
+.pxl-crow .pxl-cres { flex: 1; min-width: 0; }
+.pxl-crow .pxl-cres input { width: 100%; }
+.pxl-cid { flex: 1 1 auto; min-width: 0; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #ececef; }
+.pxl-ckind { flex-shrink: 0; font-size: 11.5px; color: #a3a3ab; text-align: center; }
+.pxl-cfl { margin-left: 2px; }

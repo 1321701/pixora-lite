@@ -193,7 +193,9 @@
         return c.aiLabel !== false;
     }
     async function pxNeedsAiLabel(url, blob) {
-        if (!pxAiLabelOn() || !/^image\/(png|jpe?g|webp)/i.test(blob.type || '')) return false;
+        var type = blob.type || '';
+        // 部分服务器不返回图片 MIME：交给解码判断，解码失败会回退保存原文件
+        if (!pxAiLabelOn() || !(/^image\/(png|jpe?g|webp)/i.test(type) || /^(application\/octet-stream)?$/i.test(type))) return false;
         var be = window.PxlBackend;
         return !!(be && be.isGenerated && await be.isGenerated(url));
     }
@@ -285,6 +287,7 @@
         else showToast('已在新标签页打开，请在新页面中保存', { type: 'info' });
     }
     window.pxDownload = pxDownload;
+    window.pxAiLabel = pxAiLabel;   // 供二次开发：给任意图片 Blob 加 AI 生成标识
     var toastAlert = function (msg) { showToast(msg); };
     try {
         Object.defineProperty(window, 'alert', { value: toastAlert, writable: true, configurable: true });

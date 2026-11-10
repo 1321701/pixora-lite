@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
     <!-- Pixora 自部署版：本地后端（必须在页面任何脚本之前加载） -->
-    <script src="config.js?v=1794290990"></script>
-    <script src="pxl/lite-api.js?v=1794290990"></script>
-    <script src="pxl/backend.js?v=1794290990"></script>
-    <script src="pxl/agent-local.js?v=1794290990"></script>
+    <script src="config.js?v=1794291052"></script>
+    <script src="pxl/lite-api.js?v=1794291052"></script>
+    <script src="pxl/backend.js?v=1794291052"></script>
+    <script src="pxl/agent-local.js?v=1794291052"></script>
     <script>(function(){try{var q=new URLSearchParams(location.search),inv=(q.get('invite')||'').replace(/[^A-Za-z0-9]/g,'').slice(0,16);if(inv){var r=JSON.parse(localStorage.getItem('px_ref')||'null');if(!r||!r.code||Date.now()-(r.ts||0)>2592e6)localStorage.setItem('px_ref',JSON.stringify({code:inv,p:String(q.get('from')||'').slice(0,32),ts:Date.now()}));}}catch(e){}if(!window.__pxHttpsRedirect&&!localStorage.getItem('nano_user'))window.location.replace('/index.html'+encodeURIComponent(location.pathname+location.search));})();</script>
     <!-- px-scale-inline: style attributes multiplied by --s -->
     <meta charset="UTF-8">
@@ -43,19 +43,19 @@
             transform: none !important; opacity: 1 !important; pointer-events: auto !important;
         }
     </style>
-    <link rel="stylesheet" href="style.css?v=1794290990">
-    <link rel="stylesheet" href="canvas.css?v=1794290990">
-    <link rel="stylesheet" href="canvas/character-lib.css?v=1794290990">
-    <link rel="stylesheet" href="canvas/agent.css?v=1794290990">
-    <link rel="stylesheet" href="canvas/panorama.css?v=1794290990">
-    <link rel="stylesheet" href="canvas/stage3d.css?v=1794290990">
-    <link rel="stylesheet" href="pixora-theme.css?v=1794290990">
+    <link rel="stylesheet" href="style.css?v=1794291052">
+    <link rel="stylesheet" href="canvas.css?v=1794291052">
+    <link rel="stylesheet" href="canvas/character-lib.css?v=1794291052">
+    <link rel="stylesheet" href="canvas/agent.css?v=1794291052">
+    <link rel="stylesheet" href="canvas/panorama.css?v=1794291052">
+    <link rel="stylesheet" href="canvas/stage3d.css?v=1794291052">
+    <link rel="stylesheet" href="pixora-theme.css?v=1794291052">
     <!-- 主页预加载：空闲时提前缓存主页及核心资源，切回生成页时秒开 -->
     <link rel="prefetch" href="index.html" as="document">
-    <link rel="prefetch" href="script.js?v=1794290990" as="script">
-    <script src="pixora-ui.js?v=1794290990" defer></script>
-    <link rel="prefetch" href="image-editor.js?v=1794290990" as="script">
-    <link rel="prefetch" href="markdown-stream-renderer.js?v=1794290990" as="script">
+    <link rel="prefetch" href="script.js?v=1794291052" as="script">
+    <script src="pixora-ui.js?v=1794291052" defer></script>
+    <link rel="prefetch" href="image-editor.js?v=1794291052" as="script">
+    <link rel="prefetch" href="markdown-stream-renderer.js?v=1794291052" as="script">
     <script type="speculationrules">
     {
       "prefetch": [{ "source": "list", "urls": ["/index.html"], "eagerness": "immediate" }],
@@ -561,36 +561,36 @@
             }
         };
     </script>
-    <script src="i18n.js?v=1794290990"></script>
-    <script src="zh2en.map.js?v=1794290990"></script>
-    <script src="zh2en.extra.js?v=1794290990"></script>
-    <script src="zh2en.extra2.js?v=1794290990"></script>
-    <script src="zh2en.extra3.js?v=1794290990"></script>
-    <script src="zh2en.canvas.js?v=1794290990"></script>
-    <script src="i18n-dom.js?v=1794290990"></script>
+    <script src="i18n.js?v=1794291052"></script>
+    <script src="zh2en.map.js?v=1794291052"></script>
+    <script src="zh2en.extra.js?v=1794291052"></script>
+    <script src="zh2en.extra2.js?v=1794291052"></script>
+    <script src="zh2en.extra3.js?v=1794291052"></script>
+    <script src="zh2en.canvas.js?v=1794291052"></script>
+    <script src="i18n-dom.js?v=1794291052"></script>
   <script>function authHeaders(extra = {}) { let user = {}; try { user = JSON.parse(localStorage.getItem("nano_user") || "{}"); } catch (e) {} const headers = { ...extra }; if (user.token) headers.Authorization = "Bearer " + user.token; return headers; }</script>
-    <script src="task-client.js?v=1794290990"></script>
-    <script src="canvas/canvas-core.js?v=1794290990"></script>
-    <script src="canvas/canvas-blocks.js?v=1794290990"></script>
-    <script src="canvas/canvas-selection.js?v=1794290990"></script>
-    <script src="canvas/canvas-edges.js?v=1794290990"></script>
-    <script src="canvas/canvas-snap.js?v=1794290990"></script>
-    <script src="canvas/canvas-generate.js?v=1794290990"></script>
-    <script src="canvas/prompt-bar.js?v=1794290990"></script>
-    <script src="canvas/canvas-history.js?v=1794290990"></script>
-    <script src="canvas/canvas-store.js?v=1794290990"></script>
-    <script src="canvas/video-proxy.js?v=1794290990"></script>
-    <script src="canvas/gen-history.js?v=1794290990"></script>
-    <script src="canvas/canvas-minimap.js?v=1794290990"></script>
-    <script src="image-editor.js?v=1794290990"></script>
-    <script src="canvas/canvas-history-ui.js?v=1794290990"></script>
-    <script src="canvas/canvas-ui.js?v=1794290990"></script>
-    <script src="canvas/character-lib.js?v=1794290990"></script>
-    <script src="canvas/panorama.js?v=1794290990"></script>
-    <script src="canvas/stage3d-core.js?v=1794290990"></script>
-    <script src="canvas/stage3d.js?v=1794290990"></script>
-    <script src="canvas/canvas-main.js?v=1794290990"></script>
-    <script src="canvas/agent.js?v=1794290990"></script>
+    <script src="task-client.js?v=1794291052"></script>
+    <script src="canvas/canvas-core.js?v=1794291052"></script>
+    <script src="canvas/canvas-blocks.js?v=1794291052"></script>
+    <script src="canvas/canvas-selection.js?v=1794291052"></script>
+    <script src="canvas/canvas-edges.js?v=1794291052"></script>
+    <script src="canvas/canvas-snap.js?v=1794291052"></script>
+    <script src="canvas/canvas-generate.js?v=1794291052"></script>
+    <script src="canvas/prompt-bar.js?v=1794291052"></script>
+    <script src="canvas/canvas-history.js?v=1794291052"></script>
+    <script src="canvas/canvas-store.js?v=1794291052"></script>
+    <script src="canvas/video-proxy.js?v=1794291052"></script>
+    <script src="canvas/gen-history.js?v=1794291052"></script>
+    <script src="canvas/canvas-minimap.js?v=1794291052"></script>
+    <script src="image-editor.js?v=1794291052"></script>
+    <script src="canvas/canvas-history-ui.js?v=1794291052"></script>
+    <script src="canvas/canvas-ui.js?v=1794291052"></script>
+    <script src="canvas/character-lib.js?v=1794291052"></script>
+    <script src="canvas/panorama.js?v=1794291052"></script>
+    <script src="canvas/stage3d-core.js?v=1794291052"></script>
+    <script src="canvas/stage3d.js?v=1794291052"></script>
+    <script src="canvas/canvas-main.js?v=1794291052"></script>
+    <script src="canvas/agent.js?v=1794291052"></script>
     <!-- ===== 设置弹窗（与生成页面一致） ===== -->
     <div id="settingsModal" class="modal hidden">
         <div class="modal-content glass-panel">
@@ -629,7 +629,7 @@
     })();
     </script>
 
-    <link rel="stylesheet" href="pxl/ui.css?v=1794290990">
-    <script src="pxl/ui.js?v=1794290990"></script>
+    <link rel="stylesheet" href="pxl/ui.css?v=1794291052">
+    <script src="pxl/ui.js?v=1794291052"></script>
 </body>
 </html>

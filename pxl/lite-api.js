@@ -1,7 +1,7 @@
 /**
  * Pixora Lite —— 中转站协议适配层（纯浏览器直连，key 不经过 Pixora 服务器）
  * Copyright (c) 2026 Pixora (https://pixoraai.cc)
- * 依照 Pixora Lite 开源许可协议授权（Apache-2.0 + 品牌保留附加条件），详见 LICENSE、TRADEMARK.md
+ * Licensed under the Apache License, Version 2.0，详见 LICENSE
  *
  * 聊天：OpenAI /v1/chat/completions（流式 + function calling）
  * 图片：/v1/images/generations、/v1/images/edits、chat 出图（Gemini / Nano Banana 一类）自动探测
@@ -387,7 +387,7 @@
             return validateProtocol(p);
         } catch (_) { return null; }
     }
-    // 内置 AI（由主站提供）：中转站没有对话模型时，用内置模型完成协议解析
+    // 内置 AI（部署者自建的 aiEndpoint）：中转站没有对话模型时，用内置模型完成协议解析
     async function builtinChat(cfg, messages) {
         const endpoint = String((g.LITE_CONFIG || {}).aiEndpoint || '').trim();
         if (!endpoint) throw new ApiError('未配置内置 AI 地址（config.js 的 aiEndpoint）', 0);

@@ -128,7 +128,7 @@ ${ml || '（未能获取模型列表，请提示用户在接口设置中连接�
         return new Response(stream, { status: 200, headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store' } });
     }
 
-    // ================= 技能库（本地存储；official 技能为空，adapt 需主站） =================
+    // ================= 技能库（本地存储；official 技能为空，adapt 需服务端） =================
     async function skillsRoute(method, rest, body) {
         const key = 'lib:agent_skills';
         const list = (await B.idb.get('kv', key)) || [];
@@ -161,7 +161,7 @@ ${ml || '（未能获取模型列表，请提示用户在接口设置中连接�
         if (path === '/api/agent/chat' && method === 'POST') return agentChat(body || {});
         const m = /^\/api\/agent-skills(?:\/([^/]+))?(?:\/([^/]+))?$/.exec(path);
         if (m) {
-            if (m[2]) return B.unsupported();   // /adapt、/inspect、/official/:id/toggle 需主站
+            if (m[2]) return B.unsupported();   // /adapt、/inspect、/official/:id/toggle 需服务端
             return skillsRoute(method, [m[1] ? decodeURIComponent(m[1]) : '', ''], body);
         }
         return null;

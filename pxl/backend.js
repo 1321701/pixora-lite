@@ -33,7 +33,7 @@
     const uid = (p) => (p || '') + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const json = (obj, status) => new Response(JSON.stringify(obj), { status: status || 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
-    const UNSUPPORTED = '自部署版暂不支持该功能，请前往 Pixora 主站使用';
+    const UNSUPPORTED = '自部署版暂不支持该功能（需要服务端能力）';
     const unsupported = () => json({ code: 1, msg: UNSUPPORTED, data: null });
 
     // ===== IndexedDB =====
@@ -124,7 +124,7 @@
             return r.ok ? await r.blob() : null;
         } catch (_) { return null; }
     }
-    // 上传到部署者的火山 TOS 图床：返回 { url: 站内展示地址, direct: 7 天直连签名地址 }；未配置或失败返回 null
+    // 上传到部署者的图床（mediaHostEndpoint）：返回 { url: 站内展示地址, direct: 7 天直连签名地址 }；未配置或失败返回 null
     async function hostUpload(blob, name) {
         const host = String((g.LITE_CONFIG || {}).mediaHostEndpoint || '').trim();
         if (!host || !blob) return null;
@@ -136,7 +136,7 @@
             return (d && d.data && d.data.url) ? d.data : null;
         } catch (_) { return null; }
     }
-    // 图床的 /api/img 地址 → 直连签名地址（中转站拉取参考图不跟随 302）
+    // 图床返回的 /api/img 代理地址 → 直连签名地址（中转站拉取参考图不跟随 302）
     async function hostDirect(u) {
         const host = String((g.LITE_CONFIG || {}).mediaHostEndpoint || '').trim();
         if (!host) return '';
@@ -150,8 +150,20 @@
             return (d && d.data && d.data.direct) || '';
         } catch (_) { return ''; }
     }
-    // 生成结果转存：优先上传部署者的火山 TOS 图床（跨设备可访问），失败再回退本地 IndexedDB
+    // AI 生成内容登记：下载时据此加「AI 生成」标识（只登记生成结果，不含用户上传的素材）
+    const AIGC_PREFIX = 'aigc:';
+    const markGenerated = (urls) => Promise.all(urls.filter(Boolean).map((x) => idb.put('kv', AIGC_PREFIX + String(x).split('#')[0], Date.now()).catch(() => {})));
+    const isGenerated = async (u) => {
+        if (!u) return false;
+        try { return !!(await idb.get('kv', AIGC_PREFIX + String(u).split('#')[0])); } catch (_) { return false; }
+    };
+    // 生成结果转存：优先上传部署者的图床（跨设备可访问），失败再回退本地 IndexedDB
     async function persistResult(u, kind) {
+        const r = await persistResultRaw(u, kind);
+        await markGenerated([u, r.url, r.thumb]);
+        return r;
+    }
+    async function persistResultRaw(u, kind) {
         const blob = await fetchAsBlob(u);
         if (!blob || !blob.size) return { url: u, thumb: u, local: false };
         const typed = (kind === 'video' && !/^video\//.test(blob.type)) ? new Blob([blob], { type: 'video/mp4' }) : blob;
@@ -305,7 +317,7 @@
         return list[0] || '';
     }
 
-    // /api/config：用中转站模型生成主站同结构的模型配置（价格一律 0，不显示积分）
+    // /api/config：用中转站模型生成页面所需结构的模型配置（价格一律 0，不显示积分）
     // 模型能力（参考图张数/分辨率/时长/首尾帧/音频）由 AI 自动适配解析（c.protocol.models）覆盖默认值
     let HUB_SYNC = null;   // protocols.json 加载完成后同步可读（buildConfig 是同步函数）
     function capsOf(protocol, id) {
@@ -891,7 +903,7 @@
 
     g.PxlBackend = {
         readCfg, writeCfg, modelLists, chatModelOf, buildConfig, relayCfg, effCaps: (id) => capsFor(readCfg(), id),
-        mediaUrl, putMedia, getMediaBlob, idb, LC,
+        mediaUrl, putMedia, getMediaBlob, idb, LC, isGenerated, markGenerated,
         json, unsupported,
         onRoute: (fn) => extraRoutes.push(fn),
         swReady: () => !!(navigator.serviceWorker && navigator.serviceWorker.controller),

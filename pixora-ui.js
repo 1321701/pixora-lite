@@ -185,6 +185,69 @@
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
     }
+    // ---- AI 生成内容标识（《人工智能生成合成内容标识办法》/ GB 45438-2025）----
+    // 下载生成的图片时：左下角加「AI 生成」显式标识（文字高度不低于短边 5%），并在 PNG 元数据写入 AIGC 隐式标识。
+    // 视频无法在浏览器内重新编码，需由模型服务在生成时自带标识（见 README 合规说明）。
+    function pxAiLabelOn() {
+        var c = window.LITE_CONFIG || {};
+        return c.aiLabel !== false;
+    }
+    async function pxNeedsAiLabel(url, blob) {
+        if (!pxAiLabelOn() || !/^image\/(png|jpe?g|webp)/i.test(blob.type || '')) return false;
+        var be = window.PxlBackend;
+        return !!(be && be.isGenerated && await be.isGenerated(url));
+    }
+    function pxPngChunk(type, data) {
+        var len = data.length, out = new Uint8Array(12 + len), dv = new DataView(out.buffer);
+        dv.setUint32(0, len);
+        for (var i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+        out.set(data, 8);
+        var crc = -1;
+        for (var j = 4; j < 8 + len; j++) {
+            crc ^= out[j];
+            for (var k = 0; k < 8; k++) crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+        }
+        dv.setUint32(8 + len, (crc ^ -1) >>> 0);
+        return out;
+    }
+    function pxAigcMeta() {
+        var id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+        return JSON.stringify({
+            Label: '1',                                  // 1 = 人工智能生成合成内容
+            ContentProducer: location.host || 'pixora-lite',
+            ProduceID: id,
+            ReservedCode1: '',
+            ContentPropagator: location.host || 'pixora-lite',
+            PropagateID: id,
+            ReservedCode2: ''
+        });
+    }
+    async function pxAiLabel(blob) {
+        var bmp = await PxThumb._decode(blob);
+        var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(bmp, 0, 0);
+        if (bmp.close) { try { bmp.close(); } catch (_) {} }
+        var fs = Math.max(12, Math.ceil(Math.min(w, h) * 0.05));
+        var pad = Math.round(fs * 0.45), m = Math.round(fs * 0.6), text = 'AI 生成';
+        ctx.font = '600 ' + fs + 'px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.textBaseline = 'middle';
+        var tw = ctx.measureText(text).width, bw = tw + pad * 2, bh = fs + pad * 2;
+        ctx.fillStyle = 'rgba(0, 0, 0, .5)';
+        ctx.fillRect(m, h - m - bh, bw, bh);
+        ctx.fillStyle = 'rgba(255, 255, 255, .92)';
+        ctx.fillText(text, m + pad, h - m - bh / 2);
+        var png = await new Promise(function (r) { c.toBlob(r, 'image/png'); });
+        if (!png) throw new Error('导出失败');
+        var bytes = new Uint8Array(await png.arrayBuffer());
+        var kw = 'AIGC\0' + pxAigcMeta(), data = new Uint8Array(kw.length);
+        for (var i = 0; i < kw.length; i++) data[i] = kw.charCodeAt(i) & 0xff;
+        // tEXt 块插在 IHDR（8 字节签名 + 25 字节）之后
+        return new Blob([bytes.subarray(0, 33), pxPngChunk('tEXt', data), bytes.subarray(33)], { type: 'image/png' });
+    }
+
     async function pxDownload(url, name) {
         var list = Array.isArray(url) ? url : [{ url: url, name: name }];
         list = list.filter(function (x) { return x && (x.url || typeof x.text === 'string'); });
@@ -205,6 +268,9 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 var blob = await res.blob();
                 if (!blob.size) throw new Error('空文件');
+                if (await pxNeedsAiLabel(it.url, blob)) {
+                    try { blob = await pxAiLabel(blob); } catch (e) { console.warn('[下载] AI 标识添加失败，保存原图:', e && e.message); }
+                }
                 saveBlob(blob, base + dlExt(blob.type, it.url));
                 ok++;
             } catch (e) {

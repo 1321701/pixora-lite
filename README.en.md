@@ -4,6 +4,8 @@
 
 [中文](README.md) · [Deploy guide (zh)](docs/deploy.md) · [Relay proxy (zh)](docs/relay-proxy.md) · [Optional services (zh)](docs/self-hosted-services.md)
 
+> **Don't want to self-host? Try the hosted version: [Pixora AI · pixoraai.cc](https://pixoraai.cc)** — sign up and start creating, no API key needed, with a tuned canvas assistant, a large inspiration library and a Photoshop plugin.
+
 ## Highlights
 
 - **No backend** – plain static files. A browser-side "local backend" (`pxl/backend.js`) keeps tasks, history, canvases and media in IndexedDB.

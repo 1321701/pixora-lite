@@ -4,7 +4,18 @@
 
 [English](README.en.md) · [部署指南](docs/deploy.md) · [中转站转发](docs/relay-proxy.md) · [可选服务接口](docs/self-hosted-services.md)
 
-> 在线演示：https://130-94-14-244.sslip.io （需填写你自己的模型服务地址与 Key）
+> **不想自己部署？直接用官方在线版 👉 [Pixora AI · pixoraai.cc](https://pixoraai.cc)**
+> 注册即用，无需准备 Key；内置精选模型、持续调优的 AI 画布助手、灵感广场数千件作品、Photoshop 插件。
+>
+> 开源版在线演示：https://130-94-14-244.sslip.io （需填写你自己的模型服务地址与 Key）
+
+| | 开源版 Pixora Lite（本仓库） | 官方在线版 [Pixora AI](https://pixoraai.cc) |
+|---|---|---|
+| 部署 | 自己部署，纯静态 | 无需部署，打开即用 |
+| 模型 | 接入你自己的模型服务与 Key | 平台内置，按积分计费 |
+| 数据 | 存在用户浏览器本地 | 云端同步，多设备可用 |
+| AI 画布助手 | 通用提示词版 | 持续调优的提示词与技能体系 |
+| 其他 | — | 灵感广场完整作品库、PS 插件、导演台、全景图等 |
 
 ## 特点
 

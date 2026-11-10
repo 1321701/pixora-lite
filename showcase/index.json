@@ -1,0 +1,24 @@
+{
+ "version": 1,
+ "total": 27,
+ "pageSize": 60,
+ "pages": 1,
+ "files": [
+  "page-1.json"
+ ],
+ "models": [
+  {
+   "name": "Nano Banana 2",
+   "count": 10
+  },
+  {
+   "name": "Nano Banana Pro",
+   "count": 9
+  },
+  {
+   "name": "GPT Image 2",
+   "count": 8
+  }
+ ],
+ "updatedAt": "2026-11-10T06:03:08.648Z"
+}

@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
     <!-- Pixora 自部署版：本地后端（必须在页面任何脚本之前加载） -->
-    <script src="config.js?v=1793760000"></script>
-    <script src="pxl/lite-api.js?v=1793760000"></script>
-    <script src="pxl/backend.js?v=1793760000"></script>
+    <script src="config.js?v=1794290628"></script>
+    <script src="pxl/lite-api.js?v=1794290628"></script>
+    <script src="pxl/backend.js?v=1794290628"></script>
     <script>if(!window.__pxHttpsRedirect&&!localStorage.getItem('nano_user'))window.location.replace('/index.html');</script>
     <!-- px-scale-inline: style attributes multiplied by --s -->
     <meta charset="UTF-8">
@@ -16,27 +16,27 @@
     <meta name="description" content="一句话，生成可商用的高清作品。汇集 Nano Banana Pro、GPT Image、Seedream 等顶级模型，从灵感到成图一步到位。">
     <link rel="preload" href="fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
     <!-- 使用系统字体栈，避免 Google Fonts 加载问题 -->
-    <link rel="stylesheet" href="style.css?v=1793760000">
-    <link rel="stylesheet" href="pixora-theme.css?v=1793760000">
-    <script src="pixora-ui.js?v=1793760000"></script>
+    <link rel="stylesheet" href="style.css?v=1794290628">
+    <link rel="stylesheet" href="pixora-theme.css?v=1794290628">
+    <script src="pixora-ui.js?v=1794290628"></script>
     <!-- 画布页预加载：空闲时提前缓存画布页及核心资源，切换时秒开 -->
     <link rel="prefetch" href="canvas.html" as="document">
-    <link rel="prefetch" href="canvas.css?v=1793760000" as="style">
-    <link rel="prefetch" href="canvas/canvas-core.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-blocks.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-selection.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-edges.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-snap.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-generate.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-history.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-store.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-minimap.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-history-ui.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-ui.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/character-lib.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/canvas-main.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/stage3d-core.js?v=1793760000" as="script">
-    <link rel="prefetch" href="canvas/stage3d.js?v=1793760000" as="script">
+    <link rel="prefetch" href="canvas.css?v=1794290628" as="style">
+    <link rel="prefetch" href="canvas/canvas-core.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-blocks.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-selection.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-edges.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-snap.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-generate.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-history.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-store.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-minimap.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-history-ui.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-ui.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/character-lib.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/canvas-main.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/stage3d-core.js?v=1794290628" as="script">
+    <link rel="prefetch" href="canvas/stage3d.js?v=1794290628" as="script">
     <script type="speculationrules">
     {
       "prefetch": [{ "source": "list", "urls": ["/canvas.html"], "eagerness": "immediate" }],
@@ -67,9 +67,9 @@
         }, 200);
     </script>
     <!-- Markdown解析库 -->
-    <script src="marked.min.js?v=1793760000"></script>
+    <script src="marked.min.js?v=1794290628"></script>
     <!-- 流式 Markdown 渲染器 -->
-    <script src="markdown-stream-renderer.js?v=1793760000"></script>
+    <script src="markdown-stream-renderer.js?v=1794290628"></script>
     <!-- Unified 生态流式渲染（延迟加载，避免阻塞页面） -->
     <script type="module">
         // 延迟加载 esm.sh 模块，避免阻塞页面渲染
@@ -105,8 +105,8 @@
     </script>
 
     <!-- 代码高亮 - 延迟加载，避免阻塞页面渲染 -->
-    <link rel="preload" href="libs/github-dark.min.css?v=1793760000" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="libs/github-dark.min.css?v=1793760000"></noscript>
+    <link rel="preload" href="libs/github-dark.min.css?v=1794290628" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="libs/github-dark.min.css?v=1794290628"></noscript>
     <script>
         // 延迟加载 highlight.js，让页面先渲染
         setTimeout(() => {
@@ -429,15 +429,20 @@
             <!-- 灵感广场：「灵感」页 / 生成页无作品时的空状态 -->
             <section id="pxInspire" aria-labelledby="pxHeroTitle">
                 <div class="px-hero">
-                    <span class="px-pill"><span class="px-tag">NEW</span><span data-i18n="pxHeroPill">GPT Image 2.5 已上线，速度优先</span></span>
-                    <h1 id="pxHeroTitle"><span data-i18n="pxHeroTitleA">一句话，生成</span><span class="px-grad" data-i18n="pxHeroTitleB">可商用</span><span data-i18n="pxHeroTitleC">的高清作品</span></h1>
-                    <p data-i18n="pxHeroDesc">汇集 Nano Banana Pro、GPT Image、Seedream 等顶级模型，最高 4K 输出</p>
+                    <span class="px-pill"><span class="px-tag">OPEN</span><span data-i18n="pxHeroPill">开源 · 自部署 · Key 只存本地</span></span>
+                    <h1 id="pxHeroTitle"><span data-i18n="pxHeroTitleA">一句话，生成</span><span class="px-grad" data-i18n="pxHeroTitleB">高清</span><span data-i18n="pxHeroTitleC">图片与视频</span></h1>
+                    <p data-i18n="pxHeroDesc">接入你自己的模型服务，生图、生视频、无限画布都在浏览器里完成</p>
                 </div>
                 <div class="px-section-head">
                     <h2 data-i18n="pxInspireTitle">灵感广场</h2>
-                    <span data-i18n="pxInspireHint">点击卡片，一键套用提示词</span>
+                    <span data-i18n="pxInspireHint">点击作品查看提示词，一键套用</span>
                 </div>
+                <div class="px-inspire-tools">
+                    <input id="pxInspireSearch" class="px-wall-search" type="search" placeholder="搜索作品、提示词或作者" autocomplete="off">
+                </div>
+                <div class="px-inspire-bar" id="pxInspireBar"></div>
                 <div class="px-inspire-grid" id="pxInspireGrid"></div>
+                <div class="px-inspire-more" id="pxInspireMore" hidden></div>
             </section>
             <!-- Grid for Generated Images -->
             <div id="imagesGrid" class="images-grid">
@@ -1027,18 +1032,18 @@
             }
         };
     </script>
-    <script src="i18n.js?v=1793760000"></script>
-    <script src="zh2en.map.js?v=1793760000"></script>
-    <script src="zh2en.extra.js?v=1793760000"></script>
-    <script src="zh2en.extra2.js?v=1793760000"></script>
-    <script src="zh2en.extra3.js?v=1793760000"></script>
-    <script src="zh2en.canvas.js?v=1793760000"></script>
-    <script src="i18n-dom.js?v=1793760000"></script>
-    <script src="task-client.js?v=1793760000"></script>
+    <script src="i18n.js?v=1794290628"></script>
+    <script src="zh2en.map.js?v=1794290628"></script>
+    <script src="zh2en.extra.js?v=1794290628"></script>
+    <script src="zh2en.extra2.js?v=1794290628"></script>
+    <script src="zh2en.extra3.js?v=1794290628"></script>
+    <script src="zh2en.canvas.js?v=1794290628"></script>
+    <script src="i18n-dom.js?v=1794290628"></script>
+    <script src="task-client.js?v=1794290628"></script>
     <!-- 统一提示词栏模块（与画布共用同一套逻辑） -->
-    <script src="canvas/prompt-bar.js?v=1793760000"></script>
-    <script src="script.js?v=1793760000"></script>
-    <script src="image-editor.js?v=1793760000" async></script>
+    <script src="canvas/prompt-bar.js?v=1794290628"></script>
+    <script src="script.js?v=1794290628"></script>
+    <script src="image-editor.js?v=1794290628" async></script>
     <script>
         // 初始化国际化
         document.addEventListener('DOMContentLoaded', function() {
@@ -2426,7 +2431,7 @@
     </div>
 
 
-    <link rel="stylesheet" href="pxl/ui.css?v=1793760000">
-    <script src="pxl/ui.js?v=1793760000"></script>
+    <link rel="stylesheet" href="pxl/ui.css?v=1794290628">
+    <script src="pxl/ui.js?v=1794290628"></script>
 </body>
 </html>

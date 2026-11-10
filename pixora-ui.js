@@ -226,8 +226,21 @@
         window.alert = toastAlert;
     }
 
-    // ---------------- 灵感广场数据 ----------------
-    var INSPIRE = [
+    // ---------------- 灵感广场：作品墙 ----------------
+    // 数据源按顺序尝试（见 config.js）：
+    //   1) LITE_CONFIG.showcaseApi   远程接口 GET ?limit&offset&sort=random&seed&model&q → { code:0, data:{ items, total, models } }
+    //   2) LITE_CONFIG.showcaseBase  静态分片目录（tools/showcase-build.js 生成 index.json + page-N.json）
+    //   3) 内置示例（assets/inspire）
+    var WALL_CFG = (window.LITE_CONFIG && typeof window.LITE_CONFIG === 'object') ? window.LITE_CONFIG : {};
+    var WALL_API = String(WALL_CFG.showcaseApi || '').trim();
+    var WALL_BASE = WALL_CFG.showcaseBase == null ? 'showcase/' : String(WALL_CFG.showcaseBase).trim();
+    if (WALL_BASE && !/\/$/.test(WALL_BASE)) WALL_BASE += '/';
+    var LICENSE_URL = {
+        'CC BY 4.0': 'https://creativecommons.org/licenses/by/4.0/deed.zh-hans',
+        'CC BY-SA 4.0': 'https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans',
+        'CC0 1.0': 'https://creativecommons.org/publicdomain/zero/1.0/deed.zh-hans'
+    };
+    var INSPIRE_FALLBACK = [
         { img: '01', model: 'Nano Banana Pro', p: '白衣修仙剑客立于云海之巅，长发飘逸，手持发光长剑，电影级光影，国风写实，超高细节' },
         { img: '02', model: 'GPT Image 2', p: '极简护肤品产品摄影，磨砂玻璃瓶，柔和晨光，浅绿色背景，商业广告质感' },
         { img: '03', model: 'Seedream 5.0', p: '赛博朋克雨夜街头的少女肖像，霓虹灯反射，浅景深，35mm 胶片质感' },
@@ -238,44 +251,620 @@
         { img: '08', model: 'GPT Image 2', p: '东方神话中的青龙穿梭于云层与雷电之间，史诗感，金色高光' }
     ];
 
+    var pxWall = {
+        items: [], more: false, models: [], offset: 0, limit: 36,
+        model: '', q: '', seed: Math.random().toString(36).slice(2, 8),
+        loading: false, loaded: false, failed: false, seq: 0, rendered: 0,
+        src: WALL_API ? 'api' : (WALL_BASE ? 'static' : 'builtin')
+    };
+    var pxWorkEl = null;
+    var pxImgIO = null;
+    var pxMoreIO = null;
+
+    function pxUseLabel() {
+        return typeof window.t === 'function' ? window.t('pxUsePrompt') : '用这个提示词';
+    }
+    function pxScrollRoot() {
+        return document.querySelector('.main-area') || null;
+    }
+    function pxAbs(u, base) {
+        if (!u) return '';
+        try { return new URL(u, new URL(base, location.href)).href; } catch (e) { return u; }
+    }
+    function pxNormItem(it, base) {
+        var o = {};
+        for (var k in it) if (Object.prototype.hasOwnProperty.call(it, k)) o[k] = it[k];
+        o.img = pxAbs(it.img, base);
+        o.thumb = pxAbs(it.thumb || it.img, base);
+        return o;
+    }
+    // 可复现的伪随机（同一 seed 每次刷新前顺序一致，翻页不重复）
+    function pxRand(seed) {
+        var h = 2166136261;
+        for (var i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+        return function () {
+            h += 0x6D2B79F5;
+            var t = h;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    function pxShuffle(arr, seed) {
+        var a = arr.slice(), r = pxRand(seed);
+        for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; }
+        return a;
+    }
+    function pxGetJson(url) {
+        return fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        });
+    }
+
+    // ---- 数据源：远程接口 ----
+    function pxFetchApi(offset) {
+        var sep = WALL_API.indexOf('?') === -1 ? '?' : '&';
+        var url = WALL_API + sep + 'limit=' + pxWall.limit + '&offset=' + offset + '&sort=random&seed=' + pxWall.seed +
+            (pxWall.model ? '&model=' + encodeURIComponent(pxWall.model) : '') +
+            (pxWall.q ? '&q=' + encodeURIComponent(pxWall.q) : '');
+        return pxGetJson(url).then(function (j) {
+            var d = (j && j.data) || {};
+            var items = (Array.isArray(d.items) ? d.items : []).filter(function (it) { return it && it.sfw !== false && it.img; });
+            var total = d.total || 0;
+            return { items: items.map(function (it) { return pxNormItem(it, WALL_API); }), models: d.models, next: offset + (d.items || []).length, more: !!(d.items || []).length && offset + d.items.length < total };
+        });
+    }
+
+    // ---- 数据源：静态分片 ----
+    var pxStatic = { index: null, pages: {}, all: null };
+    function pxStaticIndex() {
+        if (pxStatic.index) return Promise.resolve(pxStatic.index);
+        return pxGetJson(WALL_BASE + 'index.json').then(function (idx) {
+            if (!idx || !idx.pages) throw new Error('index.json 无效');
+            pxStatic.index = idx;
+            return idx;
+        });
+    }
+    function pxStaticPage(n) {
+        if (pxStatic.pages[n]) return pxStatic.pages[n];
+        var file = (pxStatic.index.files && pxStatic.index.files[n - 1]) || ('page-' + n + '.json');
+        pxStatic.pages[n] = pxGetJson(WALL_BASE + file).then(function (p) {
+            var list = Array.isArray(p) ? p : (p && p.items) || [];
+            return list.filter(function (it) { return it && it.sfw !== false && it.img; })
+                .map(function (it) { return pxNormItem(it, WALL_BASE); });
+        }).catch(function (e) { delete pxStatic.pages[n]; throw e; });
+        return pxStatic.pages[n];
+    }
+    function pxStaticAll() {
+        if (pxStatic.all) return pxStatic.all;
+        var jobs = [];
+        for (var i = 1; i <= pxStatic.index.pages; i++) jobs.push(pxStaticPage(i));
+        pxStatic.all = Promise.all(jobs).then(function (pages) { return [].concat.apply([], pages); })
+            .catch(function (e) { pxStatic.all = null; throw e; });
+        return pxStatic.all;
+    }
+    function pxMatch(it, q) {
+        return [it.title, it.prompt, it.author, it.model].join('\n').toLowerCase().indexOf(q) !== -1;
+    }
+    function pxFetchStatic(offset) {
+        return pxStaticIndex().then(function (idx) {
+            var models = idx.models || [];
+            // 无筛选：按 seed 打乱分片顺序，逐片加载（大数据量也只下载用到的分片）
+            if (!pxWall.model && !pxWall.q) {
+                var order = pxShuffle(Array.from({ length: idx.pages }, function (_, i) { return i + 1; }), pxWall.seed);
+                var per = idx.pageSize || 60;
+                var pi = Math.floor(offset / per);
+                if (pi >= order.length) return { items: [], models: models, more: false };
+                return pxStaticPage(order[pi]).then(function (list) {
+                    var start = offset - pi * per;
+                    return { items: pxShuffle(list, pxWall.seed + ':' + order[pi]).slice(start), models: models, next: (pi + 1) * per, more: pi + 1 < order.length };
+                });
+            }
+            // 有筛选 / 搜索：加载全部分片后在本地过滤
+            return pxStaticAll().then(function (all) {
+                var q = pxWall.q.toLowerCase();
+                var hit = all.filter(function (it) {
+                    return (!pxWall.model || it.model === pxWall.model) && (!q || pxMatch(it, q));
+                });
+                hit = pxShuffle(hit, pxWall.seed);
+                return { items: hit.slice(offset, offset + pxWall.limit), models: models, next: offset + pxWall.limit, more: offset + pxWall.limit < hit.length };
+            });
+        });
+    }
+
+    // ---- 数据源：内置示例 ----
+    function pxFetchBuiltin() {
+        var items = INSPIRE_FALLBACK.map(function (it, i) {
+            return {
+                id: 'builtin_' + i, title: '', prompt: it.p, model: it.model, author: 'Pixora',
+                img: 'assets/inspire/' + it.img + '.jpg', thumb: 'assets/inspire/' + it.img + '.jpg', width: 0, height: 0
+            };
+        }).filter(function (it) {
+            var q = pxWall.q.toLowerCase();
+            return (!pxWall.model || it.model === pxWall.model) && (!q || pxMatch(it, q));
+        });
+        return Promise.resolve({ items: items, models: [], more: false });
+    }
+
+    function pxFetchWall(offset) {
+        if (pxWall.src === 'api') return pxFetchApi(offset);
+        if (pxWall.src === 'static') return pxFetchStatic(offset);
+        return pxFetchBuiltin();
+    }
+
+    // 真正的懒加载：图片先只写 data-src，进入视口前 500px 才挂 src
+    function pxSetupImgLazy() {
+        if (pxImgIO || !('IntersectionObserver' in window)) return;
+        pxImgIO = new IntersectionObserver(function (entries) {
+            entries.forEach(function (en) {
+                if (!en.isIntersecting) return;
+                var img = en.target;
+                var src = img.getAttribute('data-src');
+                if (src) {
+                    img.removeAttribute('data-src');
+                    img.src = src;
+                }
+                pxImgIO.unobserve(img);
+            });
+        }, { root: pxScrollRoot(), rootMargin: '500px 0px' });
+    }
+
+    function pxLazyImg(src, alt, fallback) {
+        var img = document.createElement('img');
+        img.alt = alt || '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.setAttribute('data-src', src);
+        img.addEventListener('error', function () {
+            if (img.dataset.pxFallback) return;
+            img.dataset.pxFallback = '1';
+            if (fallback && fallback !== src) img.src = fallback;
+        });
+        if (pxImgIO) pxImgIO.observe(img);
+        else img.src = src;
+        return img;
+    }
+
+    function pxWallSkeleton(n) {
+        var html = '';
+        for (var i = 0; i < n; i++) html += '<span class="px-skel"></span>';
+        return html;
+    }
+
+    function pxRenderWallBar() {
+        var bar = document.getElementById('pxInspireBar');
+        if (!bar) return;
+        bar.innerHTML = '';
+        if (!pxWall.loaded || !(pxWall.models || []).length) return;
+
+        var all = document.createElement('button');
+        all.type = 'button';
+        all.className = 'px-chip' + (pxWall.model ? '' : ' active');
+        all.textContent = '全部';
+        all.addEventListener('click', function () {
+            if (!pxWall.model) return;
+            pxWall.model = '';
+            pxResetWall();
+        });
+        bar.appendChild(all);
+
+        (pxWall.models || []).forEach(function (m) {
+            var name = typeof m === 'string' ? m : m && m.name;
+            if (!name) return;
+            var c = document.createElement('button');
+            c.type = 'button';
+            c.className = 'px-chip' + (pxWall.model === name ? ' active' : '');
+            c.textContent = name;
+            c.addEventListener('click', function () {
+                if (pxWall.model === name) return;
+                pxWall.model = name;
+                pxResetWall();
+            });
+            bar.appendChild(c);
+        });
+    }
+
+    // 固定列宽 + 变高：按原图比例算高，最长边最多 1.62 倍宽、最矮 0.72 倍宽
+    function pxSpanFor(width, ar) {
+        var h = width / (ar || 1);
+        var max = width * 1.62;
+        var min = width * 0.72;
+        if (h > max) h = max; else if (h < min) h = min;
+        return Math.max(1, Math.ceil((h + 4) / 8));
+    }
+
+    function pxLayoutCards() {
+        var grid = document.getElementById('pxInspireGrid');
+        if (!grid) return;
+        var cards = grid.querySelectorAll('.px-card');
+        if (!cards.length) return;
+        var w = cards[0].getBoundingClientRect().width;
+        if (!w) return;
+        for (var i = 0; i < cards.length; i++) {
+            var ar = parseFloat(cards[i].getAttribute('data-ar')) || 1;
+            cards[i].style.gridRowEnd = 'span ' + pxSpanFor(w, ar);
+        }
+    }
+
+    var pxWallResizeTimer = null;
+    window.addEventListener('resize', function () {
+        if (pxWallResizeTimer) clearTimeout(pxWallResizeTimer);
+        pxWallResizeTimer = setTimeout(pxLayoutCards, 120);
+    });
+
+    function pxRenderWallCards(full) {
+        var grid = document.getElementById('pxInspireGrid');
+        if (!grid) return;
+        if (full) {
+            grid.innerHTML = '';
+            pxWall.rendered = 0;
+        }
+        if (!pxWall.items.length) {
+            grid.innerHTML = '<div class="px-wall-empty">' + (pxWall.q || pxWall.model ? '没有找到相关作品' : '暂无作品') + '</div>';
+        }
+        for (var i = pxWall.rendered; i < pxWall.items.length; i++) {
+            grid.appendChild(pxWallCard(pxWall.items[i]));
+        }
+        pxWall.rendered = pxWall.items.length;
+        pxRenderWallMore();
+        requestAnimationFrame(pxLayoutCards);
+    }
+
+    function pxRenderWallMore() {
+        var box = document.getElementById('pxInspireMore');
+        if (!box) return;
+        var has = pxWall.loaded && !pxWall.failed && pxWall.more;
+        box.hidden = !has;
+        box.innerHTML = '';
+        if (!has) return;
+        var sp = document.createElement('span');
+        sp.className = 'px-wall-loading';
+        sp.innerHTML = '<i></i>加载中';
+        box.appendChild(sp);
+    }
+
+    function pxWatchMore() {
+        var box = document.getElementById('pxInspireMore');
+        if (!box || !('IntersectionObserver' in window)) return;
+        if (pxMoreIO) pxMoreIO.disconnect();
+        pxMoreIO = new IntersectionObserver(function (entries) {
+            if (entries[0] && entries[0].isIntersecting) pxMaybeLoadMore();
+        }, { root: pxScrollRoot(), rootMargin: '600px 0px' });
+        pxMoreIO.observe(box);
+    }
+
+    function pxMaybeLoadMore() {
+        if (!pxWall.loaded || pxWall.loading || pxWall.failed) return;
+        if (!pxWall.more) return;
+        pxLoadWall(false);
+    }
+
+    // 追加后如果哨兵仍在视口附近，继续自动补一页
+    function pxKickMore() {
+        setTimeout(function () {
+            var box = document.getElementById('pxInspireMore');
+            if (!box || box.hidden) return;
+            var r = box.getBoundingClientRect();
+            if (r.top <= (window.innerHeight || 0) + 600) pxMaybeLoadMore();
+        }, 80);
+    }
+
+    function pxWallCard(item) {
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'px-card';
+        card.setAttribute('aria-label', item.title || item.prompt || '作品');
+        var ar = (item.width && item.height) ? (item.width / item.height) : 1;
+        card.setAttribute('data-ar', ar.toFixed(3));
+
+        var fig = document.createElement('span');
+        fig.className = 'px-card-fig';
+        fig.appendChild(pxLazyImg(item.thumb || item.img, item.title || '', item.img));
+
+        var meta = document.createElement('span');
+        meta.className = 'px-card-meta';
+        var title = document.createElement('strong');
+        title.className = 'px-title';
+        title.textContent = item.title || (item.prompt || '').slice(0, 40);
+        meta.appendChild(title);
+        var author = document.createElement('span');
+        author.className = 'px-author';
+        author.textContent = [item.author ? '@' + item.author : '', item.model || ''].filter(Boolean).join(' · ');
+        meta.appendChild(author);
+        fig.appendChild(meta);
+
+        card.appendChild(fig);
+        card.addEventListener('click', function () { pxOpenWork(item); });
+        return card;
+    }
+
+    function pxResetWall() {
+        pxWall.loaded = false;
+        pxWall.items = [];
+        pxWall.offset = 0;
+        pxWall.more = false;
+        pxWall.rendered = 0;
+        pxWall.failed = false;
+        var grid = document.getElementById('pxInspireGrid');
+        if (grid) grid.innerHTML = pxWallSkeleton(18);
+        pxRenderWallBar();
+        pxRenderWallMore();
+        pxLoadWall(true);
+    }
+
+    function pxLoadWall(reset) {
+        if (pxWall.loading) return;
+        pxWall.loading = true;
+        var seq = ++pxWall.seq;
+        if (reset) pxWall.offset = 0;
+        pxFetchWall(pxWall.offset)
+            .then(function (r) {
+                if (seq !== pxWall.seq) return;
+                var items = r.items || [];
+                if (reset && !items.length && !pxWall.q && !pxWall.model && pxWall.src !== 'builtin') throw new Error('empty');
+                pxWall.models = Array.isArray(r.models) ? r.models : pxWall.models;
+                pxWall.items = reset ? items : pxWall.items.concat(items);
+                pxWall.offset = r.next != null ? r.next : pxWall.offset + items.length;
+                pxWall.more = !!r.more;
+                pxWall.loaded = true;
+                pxWall.failed = false;
+                pxRenderWallBar();
+                pxRenderWallCards(!!reset);
+                pxKickMore();
+            })
+            .catch(function (e) {
+                if (seq !== pxWall.seq) return;
+                // 当前数据源不可用：降级到下一级（接口 → 静态分片 → 内置示例）
+                var next = pxWall.src === 'api' && WALL_BASE ? 'static' : 'builtin';
+                if (pxWall.src !== 'builtin') {
+                    console.warn('[作品墙] 数据源 ' + pxWall.src + ' 不可用，改用 ' + next + '：', e && e.message);
+                    pxWall.src = next;
+                    pxWall.loading = false;
+                    pxResetWall();
+                    return;
+                }
+                pxWall.loaded = true;
+                pxWall.failed = true;
+                pxRenderWallBar();
+                pxRenderWallCards(true);
+            })
+            .then(function () {
+                if (seq === pxWall.seq) pxWall.loading = false;
+            });
+    }
+
+    function pxInitWallSearch() {
+        var input = document.getElementById('pxInspireSearch');
+        if (!input || input.dataset.pxReady) return;
+        input.dataset.pxReady = '1';
+        var timer = null;
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                var v = input.value.trim();
+                if (v === pxWall.q) return;
+                pxWall.q = v;
+                pxResetWall();
+            }, 300);
+        });
+    }
+
+    function pxInitTopBtn() {
+        var main = pxScrollRoot();
+        if (!main) return;
+        var btn = document.getElementById('pxTopBtn');
+        if (btn) return;
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'pxTopBtn';
+        btn.className = 'px-top-btn';
+        btn.title = '回到顶部';
+        btn.textContent = '↑';
+        btn.addEventListener('click', function () {
+            if (main.scrollTo) main.scrollTo({ top: 0, behavior: 'smooth' });
+            else main.scrollTop = 0;
+        });
+        document.body.appendChild(btn);
+        var upd = function () { btn.classList.toggle('show', document.body.classList.contains('px-view-inspire') && (main.scrollTop || 0) > 400); };
+        main.addEventListener('scroll', upd, { passive: true });
+        upd();
+    }
+
     function renderInspire() {
         var grid = document.getElementById('pxInspireGrid');
         if (!grid) return;
-        var useLabel = typeof window.t === 'function' ? window.t('pxUsePrompt') : '用这个提示词';
-        grid.innerHTML = '';
-        INSPIRE.forEach(function (item) {
-            var card = document.createElement('button');
-            card.type = 'button';
-            card.className = 'px-card';
-            card.setAttribute('aria-label', item.p);
+        pxSetupImgLazy();
+        pxWatchMore();
+        pxInitWallSearch();
+        pxInitTopBtn();
+        if (pxWall.loaded) {
+            pxRenderWallBar();
+            pxRenderWallCards(true);
+            return;
+        }
+        if (pxWall.loading) return;
+        grid.innerHTML = pxWallSkeleton(18);
+        pxRenderWallBar();
+        pxRenderWallMore();
+        pxLoadWall(true);
+    }
 
-            var img = document.createElement('img');
-            img.loading = 'lazy';
-            img.alt = '';
-            img.src = 'assets/inspire/' + item.img + '.jpg';
-            card.appendChild(img);
+    // ---------------- 作品详情弹窗 ----------------
+    function pxCopyText(text) {
+        if (!text) return Promise.resolve(false);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text).then(function () { return true; }).catch(function () { return pxCopyFallback(text); });
+        }
+        return Promise.resolve(pxCopyFallback(text));
+    }
 
-            var meta = document.createElement('span');
-            meta.className = 'px-meta';
-            var p = document.createElement('p');
-            p.textContent = item.p;
-            var row = document.createElement('span');
-            row.className = 'px-row';
-            var model = document.createElement('span');
-            model.className = 'px-model';
-            model.textContent = item.model;
-            var use = document.createElement('span');
-            use.className = 'px-use';
-            use.textContent = useLabel;
-            row.appendChild(model);
-            row.appendChild(use);
-            meta.appendChild(p);
-            meta.appendChild(row);
-            card.appendChild(meta);
+    function pxCopyFallback(text) {
+        try {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            return ok;
+        } catch (e) { return false; }
+    }
 
-            card.addEventListener('click', function () { usePrompt(item.p); });
-            grid.appendChild(card);
+    function pxCloseWork() {
+        if (!pxWorkEl) return;
+        var el = pxWorkEl;
+        pxWorkEl = null;
+        document.body.classList.remove('px-work-open');
+        document.removeEventListener('keydown', pxWorkKey);
+        if (el.parentNode) el.parentNode.removeChild(el);
+    }
+
+    function pxWorkKey(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) pxCloseWork();
+    }
+
+    function pxSafeUrl(u) {
+        return /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
+    }
+
+    // 署名信息（CC BY 等许可要求：作者、来源、许可证链接、是否修改）
+    function pxCredit(item) {
+        var box = document.createElement('div');
+        box.className = 'px-work-credit';
+        var add = function (label, text, href) {
+            if (!text) return;
+            var row = document.createElement('div');
+            var k = document.createElement('span');
+            k.textContent = label;
+            row.appendChild(k);
+            var v;
+            if (href) {
+                v = document.createElement('a');
+                v.href = href;
+                v.target = '_blank';
+                v.rel = 'noopener noreferrer nofollow';
+            } else {
+                v = document.createElement('b');
+            }
+            v.textContent = text;
+            row.appendChild(v);
+            box.appendChild(row);
+        };
+        add('作者', item.author ? '@' + item.author : '', pxSafeUrl(item.authorUrl));
+        add('模型', item.model && item.modelRaw && item.modelRaw !== item.model ? item.model + '（' + item.modelRaw + '）' : item.model);
+        add('来源', item.source || (pxSafeUrl(item.sourceUrl) ? '原帖' : ''), pxSafeUrl(item.sourceUrl) || pxSafeUrl(item.sourceRepo));
+        add('许可', item.license, pxSafeUrl(item.licenseUrl) || LICENSE_URL[item.license] || '');
+        if (item.license) {
+            var note = document.createElement('p');
+            note.className = 'px-work-note';
+            note.textContent = 'AI 生成内容。本站展示的是按原许可转载的缩放/WebP 转码版本，版权归原作者所有。';
+            box.appendChild(note);
+        }
+        return box;
+    }
+
+    function pxOpenWork(item) {
+        pxCloseWork();
+        var root = document.createElement('div');
+        root.className = 'px-work';
+        root.setAttribute('role', 'dialog');
+        root.setAttribute('aria-modal', 'true');
+
+        var backdrop = document.createElement('div');
+        backdrop.className = 'px-work-backdrop';
+        backdrop.addEventListener('click', pxCloseWork);
+        root.appendChild(backdrop);
+
+        var panel = document.createElement('div');
+        panel.className = 'px-work-panel';
+
+        var figure = document.createElement('div');
+        figure.className = 'px-work-figure';
+        var big = document.createElement('img');
+        big.alt = item.title || '';
+        var thumb = item.thumb || item.img;
+        var full = item.img || thumb;
+        if (thumb) {
+            big.src = thumb;
+            if (thumb !== full) big.classList.add('px-img-preview');
+        }
+        if (full && full !== thumb) {
+            var pre = new Image();
+            var clearBlur = function () { big.classList.remove('px-img-preview'); };
+            pre.onload = function () {
+                big.src = full;
+                if (big.decode) big.decode().then(clearBlur).catch(clearBlur);
+                else setTimeout(clearBlur, 120);
+            };
+            pre.onerror = clearBlur;
+            pre.src = full;
+        }
+        figure.appendChild(big);
+        var aiTag = document.createElement('span');
+        aiTag.className = 'px-ai-tag';
+        aiTag.textContent = 'AI 生成';
+        figure.appendChild(aiTag);
+        panel.appendChild(figure);
+
+        var side = document.createElement('div');
+        side.className = 'px-work-side';
+
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'px-work-close';
+        close.setAttribute('aria-label', '关闭');
+        close.innerHTML = '&times;';
+        close.addEventListener('click', pxCloseWork);
+        side.appendChild(close);
+
+        var h = document.createElement('h3');
+        h.className = 'px-work-title';
+        h.textContent = item.title || '未命名作品';
+        side.appendChild(h);
+        side.appendChild(pxCredit(item));
+
+        var prompt = document.createElement('div');
+        prompt.className = 'px-work-prompt';
+        prompt.textContent = item.prompt || '（该作品未提供提示词）';
+        side.appendChild(prompt);
+
+        var actions = document.createElement('div');
+        actions.className = 'px-work-actions';
+        var use = document.createElement('button');
+        use.type = 'button';
+        use.className = 'px-work-btn primary';
+        use.textContent = pxUseLabel();
+        use.disabled = !item.prompt;
+        use.addEventListener('click', function () {
+            if (!item.prompt) return;
+            pxCloseWork();
+            usePrompt(item.prompt);
         });
+        actions.appendChild(use);
+
+        var copy = document.createElement('button');
+        copy.type = 'button';
+        copy.className = 'px-work-btn';
+        copy.textContent = '复制提示词';
+        copy.disabled = !item.prompt;
+        copy.addEventListener('click', function () {
+            pxCopyText(item.prompt || '').then(function (ok) {
+                showToast(ok ? '已复制到剪贴板' : '复制失败，请手动选择文本', { type: ok ? 'ok' : 'info' });
+            });
+        });
+        actions.appendChild(copy);
+        side.appendChild(actions);
+        panel.appendChild(side);
+        root.appendChild(panel);
+
+        document.body.appendChild(root);
+        document.body.classList.add('px-work-open');
+        document.addEventListener('keydown', pxWorkKey);
+        pxWorkEl = root;
+        close.focus();
     }
 
     function usePrompt(text) {
@@ -305,6 +894,7 @@
         });
         var main = document.querySelector('.main-area');
         if (main) main.scrollTop = 0;
+        if (view === 'inspire') setTimeout(pxLayoutCards, 60);
         if (history.replaceState) {
             history.replaceState(null, '', view === 'inspire' ? '#inspire' : location.pathname + location.search);
         }
@@ -538,10 +1128,6 @@
 
         // 输入区增强：主页与画布页通用（画布页带有 px-theme 即可生效）
         setupComposer();
-
-        // 用户头像：补齐本地缺失的头像编号并渲染（主页/画布通用）
-        pxEnsureAvatar();
-        pxApplyAvatars();
 
         // 滚动性能：滚动进行中给 body 挂 px-scrolling（CSS 据此挂起固定栏毛玻璃，
         // backdrop-filter 在内容滚过时每帧重算模糊，核显上明显掉帧），停止 180ms 后恢复

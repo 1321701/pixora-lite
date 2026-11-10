@@ -573,7 +573,6 @@ window.__PX_ZH_EN = Object.assign(window.__PX_ZH_EN || {}, {
   "场景库还没有场景，AI 会自由创作场景": "Your scene library is empty — AI will create the scenes",
   "去创建场景": "Create a scene",
   "场景最多选 6 个": "Select up to 6 scenes",
-  "NSFW 专线": "NSFW line",
   "更多设置": "More settings",
   "目标受众、剧本语言、额外要求": "Audience, script language, extra notes",
   "目标受众": "Audience",

@@ -14,8 +14,7 @@
 
     // ===== 基础 =====
     const LC = (g.LITE_CONFIG && typeof g.LITE_CONFIG === 'object') ? g.LITE_CONFIG : {};
-    const PID = String(LC.partnerId || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32);
-    const CFG_KEY = 'pxl_cfg:' + (PID || '_');
+    const CFG_KEY = 'pxl_cfg:_';
     const BASE_PATH = location.pathname.replace(/[^/]*$/, '');      // 页面所在目录（支持部署在子路径）
     const MEDIA_PREFIX = BASE_PATH + 'pxl-media/';
     const realFetch = g.fetch.bind(g);
@@ -313,7 +312,7 @@
         if (!protocol || !protocol.models) return null;
         const m = protocol.models;
         if (m[String(id)]) return m[String(id)];
-        // 宽松匹配：AI 输出的键名可能有大小写/空格/点划线变体（"Seedance 2.5*" vs "seedance-2.5-spicy"）
+        // 宽松匹配：AI 输出的键名可能有大小写/空格/点划线变体（"Seedance 2.5*" vs "seedance-2.5-pro"）
         const norm = (s) => String(s || '').toLowerCase().replace(/[\s_.]+/g, '-').replace(/-+/g, '-').replace(/-$/, '');
         const nid = norm(id);
         for (const k of Object.keys(m)) {
@@ -898,7 +897,7 @@
 
     g.PxlBackend = {
         readCfg, writeCfg, modelLists, chatModelOf, buildConfig, relayCfg, effCaps: (id) => capsFor(readCfg(), id),
-        mediaUrl, putMedia, getMediaBlob, idb, PID, LC,
+        mediaUrl, putMedia, getMediaBlob, idb, LC,
         json, unsupported,
         onRoute: (fn) => extraRoutes.push(fn),
         swReady: () => !!(navigator.serviceWorker && navigator.serviceWorker.controller),

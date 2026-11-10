@@ -409,48 +409,23 @@
                 return { ...model, id: family === 'gpt25' ? 'GPT Image 2.5' : 'GPT Image 2 标准', name: family === 'gpt25' ? 'GPT Image 2.5' : 'GPT Image 2 标准' };
             }).filter(Boolean);
             // 主模型固定显示顺序：nano2 → nanopro → gpt2 → gpt2.5 → seed5.0（未列入的排最后）
-            const MODEL_ORDER = ['Nano Banana 2.0', 'Nano Banana Pro', 'GPT Image 2 标准', 'GPT Image 2.5', 'Seedream 5.0', 'Qwen Image Edit NSFW'];
+            const MODEL_ORDER = ['Nano Banana 2.0', 'Nano Banana Pro', 'GPT Image 2 标准', 'GPT Image 2.5', 'Seedream 5.0'];
             // 视频模型（仅画布下拉出现，排最后）
             if (global.CanvasMain && this.currentGenMode === 'video') {
                 ((this.apiConfig.videoApis && this.apiConfig.videoApis.models) || []).forEach(m => {
                     if (!seen.has(m.id)) { seen.add(m.id); allModels.push(Object.assign({}, m, { _apiKey: 'video', _isVideo: true })); }
                 });
             }
-            // 视频模型分组：官方满血（原稳定模型）在上，特价线路（cpx-*）在下；组内按固定顺序
-            // _PB_DRAFT_PSEUDO_1027 样片伪模型排官方 2.5 之后（非 cpx- 前缀 → 归「官方满血」分组）
-            const VIDEO_ORDER = ['doubao-seedance-2-5-260628', 'doubao-seedance-2-5-260628-draft', 'doubao-seedance-2-0-260128', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-mini-260615', 'MiniMax-H3',
-                'cpx-sd25-official', 'cpx-sd20-official', 'cpx-sd20-line2', 'cpx-sd20-line3', 'cpx-sd25-line2', 'cpx-minimax-h3-sale'];
-            const isSale = (id) => /^cpx-/.test(String(id || ''));
-            // NSFW 专线：单独分组
-            const isNsfw = (id) => /^__none__/.test(String(id || ''));
-            const videoRank = (id) => (isSale(id) ? 2 : (isNsfw(id) ? 1 : 0));
-            const rankOf = (x) => (this._isVideoModel(x.id) ? videoRank(x.id) : 0);
+            // 视频模型按常用顺序排在图片模型之后；未列入的按服务返回顺序排最后
+            const VIDEO_ORDER = ['doubao-seedance-2-5-260628', 'doubao-seedance-2-0-260128', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-mini-260615', 'MiniMax-H3'];
             allModels.sort((a, b) => {
                 if (this._isVideoModel(a.id) !== this._isVideoModel(b.id)) return this._isVideoModel(a.id) ? 1 : -1;
-                if (rankOf(a) !== rankOf(b)) return rankOf(a) - rankOf(b);
                 const order = this._isVideoModel(a.id) ? VIDEO_ORDER : MODEL_ORDER;
                 const ia = order.indexOf(a.id);
                 const ib = order.indexOf(b.id);
                 return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
             });
-            const videoMenu = !!(global.CanvasMain && this.currentGenMode === 'video');
-            let lastGroup = '';
             allModels.forEach((model) => {
-                if (videoMenu && model._isVideo) {
-                    const g = isSale(model.id) ? 'sale' : (isNsfw(model.id) ? 'nsfw' : 'official');
-                    if (g !== lastGroup) {
-                        if (lastGroup) {
-                            const hr = document.createElement('div');
-                            hr.className = 'model-group-divider';
-                            modelMenu.appendChild(hr);
-                        }
-                        const lb = document.createElement('div');
-                        lb.className = 'model-group-label';
-                        lb.textContent = g === 'sale' ? '特价线路' : (g === 'nsfw' ? 'NSFW 专线' : '官方满血');
-                        modelMenu.appendChild(lb);
-                        lastGroup = g;
-                    }
-                }
                 const option = document.createElement('div');
                 option.className = 'model-option';
                 option.dataset.value = model.id;
@@ -476,14 +451,6 @@
                 }
                 modelMenu.appendChild(option);
             });
-            // 特价线路分组底部小字提示：pointer-events:none + user-select:none，不可误点、不参与选择；英文由 i18n-dom 词典精确匹配翻译
-            if (videoMenu && lastGroup === 'sale') {
-                const hint = document.createElement('div');
-                hint.className = 'model-group-hint';
-                hint.style.cssText = 'display:flex;align-items:flex-start;gap:6px;padding:8px 12px 10px;font-size:11px;line-height:1.5;color:var(--px-text-3,#8b919b);pointer-events:none;user-select:none;';
-                hint.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" style="flex:none;margin-top:2px;opacity:0.7;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4m0 4h.01"/></svg><span>特价模型效果不稳定，需要稳定生成体验建议使用官方模型</span>';
-                modelMenu.appendChild(hint);
-            }
             this._bindModelOptions();
             this.updateResolutionOptions(this.currentModel);
             this.toggleMjParams(this.currentModel);

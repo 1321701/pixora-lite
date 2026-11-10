@@ -512,7 +512,6 @@
                 const st = await api('/api/panorama/seam-fix', Object.assign({ imageUrl: url }, body));
                 if (st.done) res = st;
                 else {
-                    if (global.CanvasMain && global.CanvasMain._loadCredits) global.CanvasMain._loadCredits();
                     const t0 = Date.now();
                     while (!res) {
                         await new Promise(r => setTimeout(r, Date.now() - t0 < 20000 ? 2500 : 4000));
@@ -524,7 +523,6 @@
             } catch (e) {
                 const n = global.CanvasBlocks.getById(nodeId);
                 if (n && n.panoFixing) global.CanvasBlocks.update(nodeId, { panoFixing: false });
-                if (global.CanvasMain && global.CanvasMain._loadCredits) global.CanvasMain._loadCredits();
                 if (md.el.parentNode) {
                     md.body.innerHTML = `<div class="pv-err">${IC.warn}<span>${esc(e.message || '修复失败')}</span></div>`;
                     md.foot.innerHTML = `<button type="button" class="pv-btn" data-m="x">关闭</button>`;
@@ -540,7 +538,6 @@
                 </div><div class="pv-note">${IC.check}<span>已写回节点（新版本）。图片尺寸 ${res.width}×${res.height} 保持不变</span></div>`;
             md.foot.innerHTML = `<button type="button" class="pv-btn" data-m="x">完成</button><button type="button" class="pv-btn primary" data-a="view">${IC.eye}<span>在查看器中检查</span></button>`;
             md.foot.querySelector('[data-a="view"]').addEventListener('click', () => { md.close(); this.openViewer(newId, { seamGuide: true }); });
-            if (global.CanvasMain && global.CanvasMain._loadCredits) global.CanvasMain._loadCredits();
         },
         _applySeamResult(nodeId, res) {
             const CB = global.CanvasBlocks, GH = global.GenHistory;

@@ -2417,7 +2417,6 @@
                 // 重新渲染本回合的消息（中断的操作条 / 提问选项可点 / 错误重试按钮）
                 for (let i = this.msgs.length - 1; i >= 0; i--) { const x = this.msgs[i]; if (x.role === 'user') break; this._updateMsg(x); }
                 this._changed(true);
-                if (global.CanvasMain && global.CanvasMain._loadCredits && turn.genStarted) global.CanvasMain._loadCredits();
             }
         },
         // 未回应的调用补 {cancelled}，保证历史合法（每个 functionCall 都有 functionResponse）
@@ -2834,7 +2833,6 @@
                     }
                 } finally { this._pumping = false; }
                 if (this._genQ.length && !this._genTimer) this._genTimer = setInterval(() => { if (!this._genQ.length) { clearInterval(this._genTimer); this._genTimer = 0; return; } pump(false); }, 2500);
-                if (global.CanvasMain && global.CanvasMain._loadCredits) global.CanvasMain._loadCredits();
             };
             await pump(true);
             out.queued = ids.filter(id => this._genQ.indexOf(id) !== -1);

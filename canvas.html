@@ -42,10 +42,6 @@
             position: static !important; top: auto !important; left: auto !important;
             transform: none !important; opacity: 1 !important; pointer-events: auto !important;
         }
-        .float-capsule-tr #userDropdown { background: #17181c !important; backdrop-filter: none !important; border: 1px solid var(--px-line-strong) !important; border-radius: var(--px-r-md) !important; box-shadow: 0 calc(24px * var(--s, 1)) calc(60px * var(--s, 1)) calc(-16px * var(--s, 1)) rgba(0, 0, 0, 0.8); min-width: calc(232px * var(--s, 1)) !important; }
-        .float-capsule-tr #userDropdown .user-avatar { background: var(--px-lime) !important; color: var(--px-on-lime) !important; }
-        .float-capsule-tr #dropdownLogoutBtn { background: transparent !important; border: 1px solid var(--px-line-strong) !important; color: var(--px-text-2) !important; }
-        .float-capsule-tr #dropdownLogoutBtn:hover { border-color: rgba(240, 122, 122, .45) !important; color: var(--px-danger) !important; }
     </style>
     <link rel="stylesheet" href="style.css?v=1793760000">
     <link rel="stylesheet" href="canvas.css?v=1793760000">
@@ -109,11 +105,6 @@
             </button>
         </div>
         <div class="px-rail-group px-rail-bottom">
-            <button type="button" id="notificationBtn" class="px-rail-item" title="系统通知" data-i18n-title="systemNotice" onclick="showLogsModal()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                <span data-i18n="pxNavNotice">通知</span>
-                <span id="logBadge" style="display: none;"></span>
-            </button>
             <button type="button" id="settingsBtn" class="px-rail-item" title="设置" data-i18n-title="settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span data-i18n="pxNavSettings">设置</span>
@@ -141,17 +132,11 @@
             </div>
         </div>
 
-        <!-- 右上悬浮胶囊：保存状态指示灯 + 积分 + 保存按钮 -->
+        <!-- 右上悬浮胶囊：保存状态指示灯 + 保存按钮 -->
         <div class="float-capsule float-capsule-tr">
             <div class="save-status-wrap">
                 <span class="save-dot save-dot-saved" id="saveStatusDot"></span>
                 <span class="save-status-text" id="saveStatusText">已保存</span>
-            </div>
-            <div class="credits-display" id="creditsDisplay" style="display: flex; align-items: center;">
-                <span class="credits-icon px-coin"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg></span>
-                <span class="credits-value" id="creditsValue">--</span>
-                <span class="px-unit" data-i18n="pxCreditsUnit">积分</span>
-                <button type="button" class="px-recharge" onclick="showCdkModal()" title="充值">+</button>
             </div>
             <button class="capsule-btn" id="saveBtn" title="保存到云端">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -160,25 +145,6 @@
                     <polyline points="7 3 7 8 17 8 17 3"></polyline>
                 </svg>
             </button>
-            <div class="user-menu" style="position: relative;">
-                <button type="button" id="userAvatar" class="user-avatar-btn" style="width: calc(34px * var(--s, 1)); height: calc(34px * var(--s, 1)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--px-line-strong); cursor: pointer; background: var(--px-panel-2); color: var(--px-text); font: 600 calc(13px * var(--s, 1)) var(--px-font-display);">
-                    <span id="avatarText">U</span>
-                </button>
-                <div id="userDropdown" class="user-dropdown" style="position: absolute; right: 0; top: calc(100% + calc(10px * var(--s, 1))); padding: calc(15px * var(--s, 1)); z-index: 1000; display: none;">
-                    <div class="user-info" style="display: flex; align-items: center; margin-bottom: calc(15px * var(--s, 1));">
-                        <div class="user-avatar" style="width: calc(52px * var(--s, 1)); height: calc(52px * var(--s, 1)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: calc(22px * var(--s, 1)); margin-right: calc(12px * var(--s, 1)); flex: none;">
-                            <span id="dropdownAvatarText">U</span>
-                        </div>
-                        <div>
-                            <div id="userName" style="font-weight: 600; color: var(--px-text); margin-bottom: calc(4px * var(--s, 1));">用户名</div>
-                            <div id="userId" style="font-size: calc(12px * var(--s, 1)); color: var(--px-text-3);">uid:</div>
-                        </div>
-                    </div>
-                    <button type="button" id="dropdownLogoutBtn" class="logout-btn" style="width: 100%; padding: calc(9px * var(--s, 1)); border-radius: calc(8px * var(--s, 1)); font-size: calc(13px * var(--s, 1)); cursor: pointer; transition: all 0.2s ease;" data-i18n="logout">
-                        退出登录
-                    </button>
-                </div>
-            </div>
         </div>
 
         <!-- 画布视口 -->
@@ -625,20 +591,6 @@
     <script src="canvas/stage3d.js?v=1793760000"></script>
     <script src="canvas/canvas-main.js?v=1793760000"></script>
     <script src="canvas/agent.js?v=1793760000"></script>
-    <!-- ===== 系统通知弹窗（与生成页面一致） ===== -->
-    <div id="logsModal" class="logs-modal hidden">
-        <div class="logs-modal-content">
-            <div class="logs-modal-header">
-                <h2 data-i18n="systemNotice">系统通知</h2>
-                <button class="logs-close-btn" onclick="closeLogsModal()">×</button>
-            </div>
-            <div class="logs-modal-body">
-                <div id="logsList" class="logs-list">
-                    <p class="empty" data-i18n="noNotice">暂无通知</p>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- ===== 设置弹窗（与生成页面一致） ===== -->
     <div id="settingsModal" class="modal hidden">
         <div class="modal-content glass-panel">
@@ -658,62 +610,6 @@
         </div>
     </div>
     <script>
-    // ===== 系统通知（与生成页面逻辑一致） =====
-    const logsState = { logs: [], unreadCount: 0 };
-    function formatLogDate(dateStr) {
-        if (!dateStr) return '-';
-        let date;
-        if (typeof dateStr === 'string') {
-            if (dateStr.endsWith('Z') || dateStr.includes('T')) date = new Date(dateStr);
-            else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) date = new Date(dateStr.replace(' ', 'T'));
-            else date = new Date(dateStr);
-        } else date = new Date(dateStr);
-        if (isNaN(date.getTime())) return '-';
-        const p = (n) => String(n).padStart(2, '0');
-        return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())} ${p(date.getHours())}:${p(date.getMinutes())}`;
-    }
-    function getLogTypeText(type) {
-        const typeMap = { 'info': '信息', 'warning': '警告', 'error': '错误', 'success': '成功' };
-        return typeMap[type] || '信息';
-    }
-    function updateLogBadge() {
-        const badge = document.getElementById('logBadge');
-        if (badge) badge.style.display = logsState.unreadCount > 0 ? 'inline' : 'none';
-    }
-    async function fetchLogs() {
-        try {
-            const response = await fetch('/api/logs/active', { headers: authHeaders() });
-            const data = await response.json();
-            if (data && data.code === 0) {
-                logsState.logs = data.data || [];
-                const lastRead = parseInt(localStorage.getItem('logs_last_read') || 0);
-                logsState.unreadCount = logsState.logs.filter(l => new Date(l.created_at).getTime() > lastRead).length;
-                updateLogBadge();
-            }
-        } catch (e) { /* 忽略 */ }
-    }
-    function showLogsModal() {
-        const modal = document.getElementById('logsModal');
-        const list = document.getElementById('logsList');
-        if (!modal || !list) return;
-        if (logsState.logs.length === 0) {
-            list.innerHTML = '<p class="empty">暂无通知</p>';
-        } else {
-            const lastRead = parseInt(localStorage.getItem('logs_last_read') || 0);
-            list.innerHTML = logsState.logs.map(log => {
-                const isUnread = new Date(log.created_at).getTime() > lastRead;
-                return `<div class="log-item ${isUnread ? 'unread' : ''}"><div class="title">${log.title}<span class="type-badge ${log.type}">${getLogTypeText(log.type)}</span></div><div class="content">${log.content.substring(0, 100)}${log.content.length > 100 ? '...' : ''}</div><div class="time">${formatLogDate(log.created_at)}</div></div>`;
-            }).join('');
-        }
-        modal.classList.remove('hidden');
-        localStorage.setItem('logs_last_read', Date.now());
-        logsState.unreadCount = 0;
-        updateLogBadge();
-    }
-    function closeLogsModal() {
-        const modal = document.getElementById('logsModal');
-        if (modal) modal.classList.add('hidden');
-    }
     // ===== 设置弹窗 =====
     function pxSyncLangSeg() {
         const cur = localStorage.getItem('nano_lang') || 'zh';
@@ -721,41 +617,8 @@
             b.classList.toggle('active', b.dataset.pxLang === cur);
         });
     }
-    // ===== 用户菜单与退出登录（与生成页面逻辑一致） =====
-    function canvasLogout() {
-        localStorage.removeItem('nano_user');
-        window.location.href = 'index.html';
-    }
-    function toggleUserDropdown() {
-        const dropdown = document.getElementById('userDropdown');
-        if (dropdown) dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-    }
-    document.addEventListener('click', function (event) {
-        const dropdown = document.getElementById('userDropdown');
-        const userAvatar = document.getElementById('userAvatar');
-        if (dropdown && userAvatar && !dropdown.contains(event.target) && !userAvatar.contains(event.target)) dropdown.style.display = 'none';
-    });
-    // ===== 初始化：头像/用户信息/通知/设置/弹窗事件 =====
+    // ===== 初始化：设置弹窗事件 =====
     (function () {
-        // 用户信息
-        let user = {};
-        try { user = JSON.parse(localStorage.getItem('nano_user') || '{}'); } catch (e) { }
-        const avatarText = document.getElementById('avatarText');
-        const dropdownAvatarText = document.getElementById('dropdownAvatarText');
-        const initial = (user.phone || user.name || 'U').charAt(0).toUpperCase();
-        if (avatarText) avatarText.textContent = initial;
-        if (dropdownAvatarText) dropdownAvatarText.textContent = initial;
-        const userNameEl = document.getElementById('userName');
-        if (userNameEl) userNameEl.textContent = user.name || user.phone || '未登录';
-        const userIdEl = document.getElementById('userId');
-        if (userIdEl) userIdEl.textContent = 'uid: ' + (user.id || '-');
-        // 头像与退出登录
-        const userAvatar = document.getElementById('userAvatar');
-        if (userAvatar) userAvatar.addEventListener('click', toggleUserDropdown);
-        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
-        if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', canvasLogout);
-        // 通知拉取
-        fetchLogs();
         // 设置弹窗
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
@@ -763,9 +626,6 @@
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', function () { settingsModal.classList.add('hidden'); });
         if (settingsModal) settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
-        // 通知弹窗遮罩点击关闭
-        const logsModal = document.getElementById('logsModal');
-        if (logsModal) logsModal.addEventListener('click', function (e) { if (e.target === logsModal) closeLogsModal(); });
     })();
     </script>
 

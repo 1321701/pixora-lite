@@ -221,7 +221,6 @@ window.__PX_ZH_EN = Object.assign(window.__PX_ZH_EN || {}, {
   "显示全部连接线（当前：隐藏，选中节点临时显示其连线）": "Show all connections (currently: hidden; the selected node's connections are shown temporarily)",
   "图片生成节点不能接入视频/音频素材，请改用视频生成节点": "Image generation nodes cannot accept video/audio assets. Use a video generation node instead",
   "当前浏览器不支持本地视频导出，请使用最新版 Chrome/Edge": "This browser does not support local video export. Please use the latest Chrome/Edge",
-  "入库素材库：Seedance 生成人物一致性视频必须用素材 ID 引用（直接传人脸图会被防伪拦截）": "Save to asset library: Seedance character-consistency videos must reference the asset ID (uploading face images directly will be blocked by anti-spoofing)",
   "素材入库失败：图片可能不符合要求（格式/比例 0.4-2.5/边长 300-6000px/小于30MB）": "Failed to save to asset library: the image may not meet the requirements (format / aspect ratio 0.4-2.5 / side length 300-6000px / under 30MB)",
   "画布在其他窗口或设备上已被修改。 点击「确定」用当前内容覆盖云端； 点击「取消」放弃本地修改，重新加载云端最新版本。": "The canvas has been modified in another window or device. Click \"OK\" to overwrite the cloud version with the current content; click \"Cancel\" to discard local changes and reload the latest cloud version.",
   // ---- 角色库（第一期）----

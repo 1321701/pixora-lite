@@ -138,8 +138,6 @@
             this._restoreEdgesHidden();
             // 加载完成后重置选中状态：收起工具栏，提示词栏进入底部停靠模式
             this._resetSelectionToDock();
-            // 加载用户积分
-            this._loadCredits();
             // Lite 专属版「在画布中继续编辑」带来的素材/提示词（同源 localStorage 交接）
             this._consumeLitePending();
             // 恢复画布任务（页面刷新后重新轮询 + 重新关联生成中节点）
@@ -1054,29 +1052,6 @@
             }, true);
         },
 
-        // 加载用户积分（与主页一致：查询当前用户个人积分余额，需携带登录凭证）
-        async _loadCredits() {
-            try {
-                let token = '';
-                try { token = (JSON.parse(localStorage.getItem('nano_user') || '{}') || {}).token || ''; } catch (_) {}
-                const res = await fetch(`${global.API_CONFIG.baseUrl}/api/user/credits`, {
-                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-                });
-                const data = await res.json();
-                if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
-                    const credits = data.data.credits;
-                    const el = document.getElementById('creditsValue');
-                    if (el) el.textContent = Math.round(credits);
-                    const displayEl = document.getElementById('creditsDisplay');
-                    if (displayEl) displayEl.style.display = 'flex';
-                    // 余额不足时显示红色警告
-                    if (el) el.style.color = credits <= 0 ? '#f5222d' : '';
-                }
-            } catch (e) {
-                console.warn('[画布] 积分加载失败:', e);
-            }
-        },
-
         // 转义 HTML（防止画布页名称中的特殊字符破坏 DOM）
         _esc(s) {
             if (!s) return '';
@@ -1473,7 +1448,7 @@
             }
         },
 
-        // 设为/移除角色素材（入库 icover.ai 素材库；Seedance 生成时以 asset:// 引用，人物一致性且绕过防伪拦截）
+        // 设为/移除角色素材（入库素材库；生成时以 asset:// 引用，保持人物一致性）
         async _toggleAssetRef(node) {
             const CB = global.CanvasBlocks;
             const CG = global.CanvasGenerate;

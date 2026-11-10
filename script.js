@@ -479,10 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // 渲染模型选项
                 renderModelOptionsForApi(apiConfig.defaultApi);
-                
-                // 配置加载完成后获取积分（如果后端支持）
-                fetchCredits();
-                
+                                
                 return true;
             } else {
                 throw new Error('服务器返回错误');
@@ -3435,21 +3432,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // 注意：任务数量限制已移至后端，每个用户最多10个生成中的任务
 
-        // 检查余额是否充足（获取当前模型价格）
-        let requiredCredits = 0;
-        const defaultApi = apiConfig?.defaultApi;
-        if (defaultApi && apiConfig?.apis?.[defaultApi]?.frontend?.models) {
-            const modelConfig = apiConfig.apis[defaultApi].frontend.models.find(m => m.id === actualModel);
-            if (modelConfig) {
-                requiredCredits = modelConfig.price || 0;
-            }
-        }
-
-        const hasSufficientCredits = await checkCreditsSufficient(requiredCredits);
-        if (!hasSufficientCredits) {
-            return; // 余额不足，不继续执行
-        }
-
         // 禁用生成按钮，防止重复点击
         const generateBtnEl = document.getElementById('generateBtn');
         if (generateBtnEl) {
@@ -3484,9 +3466,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 params,
                 startTime: Date.now()
             });
-
-            // 任务创建成功后立即刷新余额（后端已扣除积分）
-            fetchCredits();
         } catch (error) {
             alert('创建任务失败: ' + error.message);
         }
@@ -4338,8 +4317,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 生成成功，显示下载按钮，隐藏重试遮罩
                 card.querySelector('.task-overlay').classList.remove('hidden');
                 card.querySelector('.task-retry-overlay').classList.add('hidden');
-                // 生成成功后刷新积分
-                fetchCredits();
                 // 保存生成记录
                 await saveGenerationRecord(taskId, originalUrl, thumbnailUrl, card);
                 
@@ -4453,9 +4430,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 确保设置面板中的API列表也更新
         renderSettingsModelList();
-        
-        // 加载设置后获取积分
-        fetchCredits();
     }
 
     function saveSettings() {
@@ -4464,58 +4438,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('nano_selected_model', currentModel);
             // 同步到主界面的 currentModel
             window.mainCurrentModel = currentModel;
-        }
-        // 保存设置后获取积分
-        fetchCredits();
-    }
-
-    // 获取用户积分余额
-    let currentSystemCredits = 0;
-
-    async function fetchCredits() {
-        try {
-            // 从后端查询当前用户自己的余额
-            const response = await fetch(`${getBackendUrl()}/api/user/credits`, { headers: authHeaders() });
-
-            const data = await response.json();
-            
-            if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
-                currentSystemCredits = data.data.credits;
-                const credits = Math.round(currentSystemCredits);
-                document.getElementById('creditsValue').textContent = credits;
-                document.getElementById('creditsDisplay').style.display = 'flex';
-                
-
-            } else {
-                document.getElementById('creditsDisplay').style.display = 'none';
-            }
-        } catch (err) {
-            console.error('[余额查询] 失败:', err);
-            document.getElementById('creditsDisplay').style.display = 'none';
-        }
-    }
-    
-    // 检查用户余额是否充足（不再调用系统总余额接口）
-    async function checkCreditsSufficient(requiredCredits = 0) {
-        try {
-            const response = await fetch(`${getBackendUrl()}/api/user/credits`, { headers: authHeaders() });
-            const data = await response.json();
-            
-            if (data.code === 0 && data.data && typeof data.data.credits === 'number') {
-                currentSystemCredits = data.data.credits;
-                document.getElementById('creditsValue').textContent = Math.round(currentSystemCredits);
-                document.getElementById('creditsDisplay').style.display = 'flex';
-                
-                if (currentSystemCredits < requiredCredits) {
-                    showNotification('您的积分不足，请充值后再生成', 'error');
-                    return false;
-                }
-                return true;
-            }
-            return false;
-        } catch (err) {
-            console.error('[余额检查] 失败:', err);
-            return false;
         }
     }
 
@@ -5386,9 +5308,6 @@ const HISTORY_PAGE_SIZE = 70;
             card.dataset.pollingUpload = 'true';
             pollTosUploadStatus(task.id, card);
         }
-
-        // 任务完成后刷新用户个人积分余额
-        fetchCredits();
     }
 
     // 创建 MJ 四宫格 HTML（简化版，只显示图片，操作按钮在大图界面）
@@ -6681,197 +6600,3 @@ const HISTORY_PAGE_SIZE = 70;
     };
 });
 
-// ==================== 日志和广告功能 ====================
-
-let logsState = {
-    logs: [],
-    unreadCount: 0,
-    lastReadTime: localStorage.getItem('logs_last_read') || 0
-};
-
-let currentAd = null;
-
-// 格式化日期
-function formatLogDate(dateStr) {
-    if (!dateStr) return '-';
-    let date;
-    if (typeof dateStr === 'string') {
-        if (dateStr.endsWith('Z')) {
-            date = new Date(dateStr);
-        } else if (dateStr.includes('T')) {
-            date = new Date(dateStr);
-        } else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
-            date = new Date(dateStr + 'Z');
-        } else {
-            date = new Date(dateStr);
-        }
-    } else {
-        date = new Date(dateStr);
-    }
-    
-    if (isNaN(date.getTime())) {
-        return '-';
-    }
-    
-    return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    });
-}
-
-// 获取日志类型文本
-function getLogTypeText(type) {
-    const typeMap = {
-        'info': '信息',
-        'warning': '警告',
-        'error': '错误',
-        'success': '成功'
-    };
-    return typeMap[type] || '信息';
-}
-
-// 获取日志列表
-async function fetchLogs() {
-    try {
-        const response = await fetch('/api/logs/active', { headers: authHeaders() });
-        const data = await response.json();
-        
-        if (data?.code === 0) {
-            logsState.logs = data.data || [];
-            updateUnreadCount();
-            updateLogBadge();
-        }
-    } catch (error) {
-        console.error('[日志] 获取失败:', error);
-    }
-}
-
-// 更新未读数量
-function updateUnreadCount() {
-    const lastRead = parseInt(localStorage.getItem('logs_last_read') || 0);
-    logsState.unreadCount = logsState.logs.filter(log => {
-        const logTime = new Date(log.created_at).getTime();
-        return logTime > lastRead;
-    }).length;
-}
-
-// 更新日志徽标显示
-function updateLogBadge() {
-    const badge = document.getElementById('logBadge');
-    if (badge) {
-        badge.style.display = logsState.unreadCount > 0 ? 'inline' : 'none';
-    }
-}
-
-// 显示日志弹窗
-function showLogsModal() {
-    const modal = document.getElementById('logsModal');
-    const list = document.getElementById('logsList');
-    
-    if (!modal || !list) return;
-    
-    if (logsState.logs.length === 0) {
-        list.innerHTML = '<p class="empty">暂无通知</p>';
-    } else {
-        const lastRead = parseInt(localStorage.getItem('logs_last_read') || 0);
-        list.innerHTML = logsState.logs.map(log => {
-            const logTime = new Date(log.created_at).getTime();
-            const isUnread = logTime > lastRead;
-            return `
-                <div class="log-item ${isUnread ? 'unread' : ''}">
-                    <div class="title">
-                        ${log.title}
-                        <span class="type-badge ${log.type}">${getLogTypeText(log.type)}</span>
-                    </div>
-                    <div class="content">${log.content.substring(0, 100)}${log.content.length > 100 ? '...' : ''}</div>
-                    <div class="time">${formatLogDate(log.created_at)}</div>
-                </div>
-            `;
-        }).join('');
-    }
-    
-    modal.classList.remove('hidden');
-    
-    // 标记为已读
-    localStorage.setItem('logs_last_read', Date.now());
-    logsState.unreadCount = 0;
-    updateLogBadge();
-}
-
-// 关闭日志弹窗
-function closeLogsModal() {
-    const modal = document.getElementById('logsModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-// 获取广告
-async function fetchAd() {
-    try {
-        const response = await fetch('/api/ads/current');
-        const data = await response.json();
-        
-        if (data?.code === 0 && data.data) {
-            currentAd = data.data;
-            showAdIfNeeded();
-        }
-    } catch (error) {
-        console.error('[广告] 获取失败:', error);
-    }
-}
-
-// 显示广告（如果需要）
-function showAdIfNeeded() {
-    if (!currentAd) return;
-    
-    const hiddenAds = JSON.parse(localStorage.getItem('hidden_ads') || '[]');
-    if (hiddenAds.includes(currentAd.random_code)) {
-        return;
-    }
-    
-    const modal = document.getElementById('adModal');
-    const titleEl = document.getElementById('adTitle');
-    const imageEl = document.getElementById('adImage');
-    const checkboxEl = document.getElementById('dontShowAgain');
-    
-    if (!modal || !titleEl || !imageEl) return;
-    
-    titleEl.textContent = currentAd.title;
-    imageEl.src = currentAd.image_url;
-    if (checkboxEl) checkboxEl.checked = false;
-    
-    modal.classList.remove('hidden');
-}
-
-// 关闭广告弹窗
-function closeAdModal() {
-    const modal = document.getElementById('adModal');
-    const checkboxEl = document.getElementById('dontShowAgain');
-    
-    if (!modal) return;
-    
-    // 同一条广告关闭一次后不再弹出（不再依赖勾选“不再显示”）
-    if (currentAd) {
-        const hiddenAds = JSON.parse(localStorage.getItem('hidden_ads') || '[]');
-        if (!hiddenAds.includes(currentAd.random_code)) {
-            hiddenAds.push(currentAd.random_code);
-            localStorage.setItem('hidden_ads', JSON.stringify(hiddenAds));
-        }
-    }
-    
-    modal.classList.add('hidden');
-}
-
-// 初始化日志和广告
-function initLogsAndAds() {
-    fetchLogs();
-    fetchAd();
-    setInterval(fetchLogs, 5 * 60 * 1000);
-}
-
-document.addEventListener('DOMContentLoaded', initLogsAndAds);

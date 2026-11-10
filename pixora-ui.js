@@ -44,9 +44,6 @@
         el.appendChild(text);
 
         var action = opts.action;
-        if (!action && /积分不足|余额不足/.test(msg) && typeof window.showCdkModal === 'function') {
-            action = { label: '去充值', onClick: window.showCdkModal };
-        }
         if (action) {
             var btn = document.createElement('button');
             btn.type = 'button';
@@ -86,7 +83,7 @@
 
     // ---------------- 本地缩略图 ----------------
     // 浏览器本地把图片压成 800px（中图）+ 240px（小图）WebP（不支持 WebP 回退 JPG），随原图一起上传，
-    // 服务端直接存储，不再调用火山引擎实时图片处理生成缩略图
+    // 存储端直接保存，无需服务端实时生成缩略图
     var PxThumb = {
         _decode: function (src) {
             if (window.createImageBitmap) {
@@ -558,85 +555,6 @@
             }, { passive: true });
         }
     });
-
-    // ===== 用户头像：显示 + 九宫格更换（主页/画布通用） =====
-    var AVATAR_COUNT = 9;
-    var AVATAR_NAMES = ['panda', 'corgi', 'penguin', 'rabbit', 'cat', 'fox', 'elephant', 'chick', 'hedgehog'];
-    function pxGetUser() {
-        try { return JSON.parse(localStorage.getItem('nano_user') || 'null'); } catch (e) { return null; }
-    }
-    function pxAvatarSrc(n) { return '/assets/avatars/avatar-0' + n + '-' + (AVATAR_NAMES[n - 1] || 'panda') + '.png'; }
-    function pxApplyAvatars(user) {
-        user = user || pxGetUser();
-        if (!user || !user.avatar) return;
-        document.querySelectorAll('#userAvatar, .user-avatar').forEach(function (el) {
-            if (String(el.dataset.pxAv || '') === String(user.avatar)) return;
-            el.dataset.pxAv = user.avatar;
-            el.innerHTML = '<img src="' + pxAvatarSrc(user.avatar) + '" alt="avatar" draggable="false" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">';
-        });
-    }
-    function pxEnsureAvatar() { // 已登录但本地缺头像编号：向服务器取（服务端会在首次登录时随机分配）
-        var u = pxGetUser();
-        if (!u || !u.token || u.avatar) return;
-        fetch('/api/user/avatar', { headers: { 'Authorization': 'Bearer ' + u.token } })
-            .then(function (r) { return r.json(); })
-            .then(function (j) {
-                if (j && j.code === 0 && j.data && j.data.avatar) {
-                    u.avatar = j.data.avatar;
-                    localStorage.setItem('nano_user', JSON.stringify(u));
-                    pxApplyAvatars(u);
-                }
-            }).catch(function () {});
-    }
-    function pxOpenAvatarPicker() {
-        var u = pxGetUser();
-        if (!u || !u.token) { if (window.pxToast) pxToast('请先登录', 'warn'); return; }
-        var ov = document.getElementById('pxAvatarPicker');
-        if (!ov) {
-            ov = document.createElement('div');
-            ov.id = 'pxAvatarPicker';
-            ov.className = 'px-avatar-picker';
-            var grid = '';
-            for (var i = 1; i <= AVATAR_COUNT; i++) {
-                grid += '<button type="button" class="px-av-opt" data-n="' + i + '" aria-label="头像' + i + '"><img src="' + pxAvatarSrc(i) + '" alt="" draggable="false"></button>';
-            }
-            ov.innerHTML = '<div class="px-av-panel"><div class="px-av-title">选择头像</div><div class="px-av-grid">' + grid + '</div><div class="px-av-hint">点击头像即可更换</div><button type="button" class="px-av-close">关闭</button></div>';
-            document.body.appendChild(ov);
-            ov.addEventListener('click', function (e) {
-                if (e.target === ov || (e.target.closest && e.target.closest('.px-av-close'))) { ov.classList.remove('open'); return; }
-                var btn = e.target.closest && e.target.closest('.px-av-opt');
-                if (!btn) return;
-                var n = Number(btn.dataset.n);
-                var cur = pxGetUser(); if (!cur || !cur.token) return;
-                fetch('/api/user/avatar', {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + cur.token, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ avatar: n })
-                }).then(function (r) { return r.json(); }).then(function (j) {
-                    if (j && j.code === 0) {
-                        cur.avatar = n;
-                        localStorage.setItem('nano_user', JSON.stringify(cur));
-                        pxApplyAvatars(cur);
-                        ov.classList.remove('open');
-                        if (window.pxToast) pxToast('头像已更新');
-                    } else {
-                        if (window.pxToast) pxToast((j && j.msg) || '更换失败', 'err');
-                    }
-                }).catch(function () { if (window.pxToast) pxToast('网络异常，更换失败', 'err'); });
-            });
-        }
-        ov.querySelectorAll('.px-av-opt').forEach(function (b) {
-            b.classList.toggle('cur', Number(b.dataset.n) === Number(u.avatar));
-        });
-        ov.classList.add('open');
-    }
-    // 下拉面板里的头像点击 → 打开更换弹窗（捕获阶段，避免被页面其它逻辑拦截）
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest) return;
-        var av = e.target.closest('#userDropdown .user-avatar');
-        if (av) { e.stopPropagation(); pxOpenAvatarPicker(); }
-    }, true);
-    window.PixoraAvatar = { apply: pxApplyAvatars, open: pxOpenAvatarPicker };
 
     // 从画布页跳回时，打开对应弹窗（需等 script.js 绑定完事件）
     window.addEventListener('load', function () {

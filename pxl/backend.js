@@ -683,13 +683,8 @@
 
         // ---- 配置 / 用户 / 杂项 ----
         if (path === '/api/config') return json(buildConfig());
+        // 画布的生成确认卡会查询余额；自部署版不计费，返回足够大的值
         if (path === '/api/user/credits') return json({ code: 0, data: { credits: 999999, status: 'active' } });
-        if (path === '/api/user/avatar') {
-            if (method === 'POST' && body && body.avatar) localStorage.setItem('pxl_avatar', String(body.avatar));
-            return json({ code: 0, data: { avatar: Number(localStorage.getItem('pxl_avatar') || 1) } });
-        }
-        if (path === '/api/logs/active') return json({ code: 0, data: [] });
-        if (path === '/api/ads/current') return json({ code: 0, data: null });
 
         // ---- 任务 ----
         if (path === '/api/tasks' && method === 'POST') {
@@ -859,8 +854,7 @@
         }
 
         // ---- 自部署版不提供的服务端能力 ----
-        if (/^\/(api\/(director|agent|agent-skills|panorama|midjourney|pay|invite|video\/repair)|v1\/(assets|media\/trim|media\/import-url))(\/|$)/.test(path) ||
-            path === '/api/user/redeem-cdk') return unsupported();
+        if (/^\/(api\/(director|agent|agent-skills|panorama|midjourney|video\/repair)|v1\/(assets|media\/trim|media\/import-url))(\/|$)/.test(path)) return unsupported();
         return null;   // 未知路径：交还真实网络
     }
     const extraRoutes = [];

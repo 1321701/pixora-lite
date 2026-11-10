@@ -1119,7 +1119,7 @@
                 alert('删除失败：' + (e.message || ''));
             }
         },
-        // 入库 icover 素材库：由服务端逐张入库（含造型参考图），每张图的 assetId/assetStatus 按 url 写回各自的图；
+        // 入库素材库：由服务端逐张入库（含造型参考图），每张图的 assetId/assetStatus 按 url 写回各自的图；
         // 前端只触发 + 轮询读取（不再用本地快照 PUT 整个 refs，避免与用户编辑互相覆盖）；失败不影响角色使用
         async _ingest(id) {
             const c = this.get(id);

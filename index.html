@@ -348,80 +348,6 @@
             });
         });
     </script>
-    <style>
-    /* ---- 右上角「邀请有礼」入口动效 ---- */
-    #inviteEntryBtn.px-tr-invite {
-        position: relative;
-        overflow: hidden;
-        isolation: isolate;
-        border-color: rgba(196, 241, 123, .55);
-        background: linear-gradient(115deg, #e6ffa8 0%, #c4f17b 26%, #9fe24f 50%, #d8ff93 74%, #e6ffa8 100%);
-        background-size: 240% 100%;
-        color: #16200a;
-        font-weight: 800;
-        letter-spacing: .02em;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        animation: invGrad 5.5s linear infinite, invGlow 2.8s ease-in-out infinite;
-        will-change: background-position, box-shadow;
-    }
-    #inviteEntryBtn.px-tr-invite:hover {
-        color: #16200a;
-        border-color: rgba(196, 241, 123, .95);
-        transform: translateY(-1px) scale(1.04);
-    }
-    #inviteEntryBtn.px-tr-invite:active { transform: scale(.97); }
-
-    @keyframes invGrad {
-        0%   { background-position: 0% 50%; }
-        100% { background-position: 100% 50%; }
-    }
-    @keyframes invGlow {
-        0%, 100% { box-shadow: 0 0 calc(6px * var(--s, 1)) rgba(196, 241, 123, .22); }
-        50%      { box-shadow: 0 0 calc(16px * var(--s, 1)) rgba(196, 241, 123, .6), 0 0 0 calc(3px * var(--s, 1)) rgba(196, 241, 123, .16); }
-    }
-
-    /* 光带从左扫到右 */
-    #inviteEntryBtn.px-tr-invite::after {
-        content: "";
-        position: absolute;
-        top: -60%;
-        left: -70%;
-        width: 42%;
-        height: 220%;
-        transform: rotate(18deg);
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75), transparent);
-        animation: invShine 3.6s cubic-bezier(.4, 0, .2, 1) infinite;
-        pointer-events: none;
-        z-index: 1;
-    }
-    @keyframes invShine {
-        0%, 58%   { left: -70%; }
-        82%, 100% { left: 135%; }
-    }
-
-    /* 礼物图标周期摇摆 */
-    #inviteEntryBtn.px-tr-invite .inv-ico svg {
-        width: calc(17px * var(--s, 1));
-        height: calc(17px * var(--s, 1));
-        filter: drop-shadow(0 calc(1px * var(--s, 1)) calc(1px * var(--s, 1)) rgba(255, 255, 255, .55));
-        transform-origin: 50% 65%;
-        animation: invWiggle 3.6s ease-in-out infinite;
-    }
-    @keyframes invWiggle {
-        0%, 70%, 100% { transform: rotate(0) scale(1); }
-        76%           { transform: rotate(-16deg) scale(1.12); }
-        82%           { transform: rotate(13deg) scale(1.12); }
-        88%           { transform: rotate(-8deg) scale(1.06); }
-        94%           { transform: rotate(4deg) scale(1.02); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        #inviteEntryBtn.px-tr-invite,
-        #inviteEntryBtn.px-tr-invite::after,
-        #inviteEntryBtn.px-tr-invite .inv-ico svg { animation: none !important; }
-    }
-    </style>
 </head>
 <body class="px-theme px-view-generate">
     <!-- 外部链接安全提示弹窗 -->
@@ -443,50 +369,6 @@
         </div>
     </div>
 
-    <!-- 日志弹窗 -->
-    <div id="logsModal" class="logs-modal hidden">
-        <div class="logs-modal-content">
-            <div class="logs-modal-header">
-                <h2 data-i18n="systemNotice">系统通知</h2>
-                <button class="logs-close-btn" onclick="closeLogsModal()">×</button>
-            </div>
-            <div class="logs-modal-body">
-                <div id="logsList" class="logs-list">
-                    <p class="empty" data-i18n="noNotice">暂无通知</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 广告弹窗 -->
-    <div id="adModal" class="ad-modal hidden">
-        <div class="ad-modal-content">
-            <button class="ad-close-btn" onclick="closeAdModal()">×</button>
-            <div class="ad-content">
-                <h3 id="adTitle"></h3>
-                <img id="adImage" src="" alt="广告">
-                <div class="ad-actions">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="dontShowAgain">
-                        不再显示
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- AI聊天助手悬浮按钮 - 小机器人 -->
-    <div class="ai-chat-robot" onclick="toggleAiChat()" title="小P" data-i18n-title="chatRobotName">
-        <div class="robot-head">
-            <div class="robot-face">
-                <div class="robot-eye left"></div>
-                <div class="robot-eye right"></div>
-                <div class="robot-mouth"></div>
-            </div>
-            <div class="robot-antenna"></div>
-        </div>
-        <div class="robot-body"></div>
-    </div>
 
     <!-- 背景彩球 -->
     <div class="bg-balls">
@@ -527,11 +409,6 @@
                 </button>
             </div>
             <div class="px-rail-group px-rail-bottom">
-                <button type="button" id="notificationBtn" class="px-rail-item" title="系统通知" data-i18n-title="systemNotice" onclick="showLogsModal()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                    <span data-i18n="pxNavNotice">通知</span>
-                    <span id="logBadge" style="display: none;"></span>
-                </button>
                 <button type="button" id="settingsBtn" class="px-rail-item" title="设置" data-i18n-title="settings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     <span data-i18n="pxNavSettings">设置</span>
@@ -544,38 +421,8 @@
         </nav>
 
         <div class="main-content-wrapper">
-        <!-- 右上角：PS 插件 / 积分 / 用户 -->
+        <!-- 右上角：接口设置入口（pxl/ui.js 注入） -->
         <div class="px-topright">
-            <button type="button" id="inviteEntryBtn" class="px-tr-btn px-tr-invite" title="邀请有礼，邀请好友得积分" onclick="showInviteModal()"><span class="inv-ico" style="display:inline-flex;align-items:center;position:relative;z-index:2;"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="invGiftLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9b8a"/><stop offset="1" stop-color="#ff6b58"/></linearGradient><linearGradient id="invGiftBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5f70"/><stop offset="1" stop-color="#dc2038"/></linearGradient></defs><ellipse cx="8.7" cy="5.9" rx="3.4" ry="2" transform="rotate(-28 8.7 5.9)" fill="#ffcf3d"/><ellipse cx="15.3" cy="5.9" rx="3.4" ry="2" transform="rotate(28 15.3 5.9)" fill="#ffcf3d"/><circle cx="12" cy="7.2" r="1.7" fill="#ffb01f"/><rect x="2.5" y="8.6" width="19" height="4.7" rx="1.7" fill="url(#invGiftLid)"/><rect x="4.2" y="12.9" width="15.6" height="8.4" rx="1.8" fill="url(#invGiftBody)"/><rect x="10.4" y="8.6" width="3.2" height="12.7" rx="1.2" fill="#ffd93d"/><rect x="10.9" y="12.9" width="1.1" height="8.4" fill="rgba(255,255,255,.32)"/><rect x="5.4" y="14.2" width="2.6" height="5" rx="1.1" fill="rgba(255,255,255,.3)"/></svg></span><span class="px-tr-label" style="position:relative;z-index:2;">邀请有礼</span></button>
-            <button type="button" id="psPluginBtn" class="px-tr-btn" title="PS 插件" onclick="showPsPluginModal()"><span class="px-ps">Ps</span><span class="px-tr-label">插件</span></button>
-            <div class="credits-display" id="creditsDisplay" title="积分余额">
-                <span class="px-coin"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg></span>
-                <span class="credits-value" id="creditsValue">--</span>
-                <span class="px-unit" data-i18n="pxCreditsUnit">积分</span>
-                <button type="button" class="px-recharge" onclick="showCdkModal()" title="充值">+</button>
-            </div>
-                <div class="user-menu">
-                    <button type="button" id="userAvatar" class="user-avatar-btn" style="width: calc(32px * var(--s, 1)); height: calc(32px * var(--s, 1)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
-                        <span id="avatarText">U</span>
-                    </button>
-                    <div id="userDropdown" class="user-dropdown" style="position: absolute; padding: calc(15px * var(--s, 1)); z-index: 1000; display: none;">
-                        <div class="user-info" style="display: flex; align-items: center; margin-bottom: calc(15px * var(--s, 1));">
-                            <div class="user-avatar" style="width: calc(52px * var(--s, 1)); height: calc(52px * var(--s, 1)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: calc(22px * var(--s, 1)); margin-right: calc(12px * var(--s, 1)); flex: none;">
-                                <span id="dropdownAvatarText">U</span>
-                            </div>
-                            <div>
-                                <div id="userName" style="font-weight: 600; color: var(--px-text); margin-bottom: calc(4px * var(--s, 1));">用户名</div>
-                                <div id="userId" style="font-size: calc(12px * var(--s, 1)); color: var(--px-text-3);">uid:</div>
-                            </div>
-                        </div>
-                        <button type="button" id="dropdownInviteBtn" class="logout-btn" style="width: 100%; padding: calc(9px * var(--s, 1)); border-radius: calc(8px * var(--s, 1)); font-size: calc(13px * var(--s, 1)); cursor: pointer; transition: all 0.2s ease; margin-bottom: calc(8px * var(--s, 1));" onclick="showInviteModal()">
-                            邀请有礼
-                        </button>
-                        <button type="button" id="dropdownLogoutBtn" class="logout-btn" style="width: 100%; padding: calc(9px * var(--s, 1)); border-radius: calc(8px * var(--s, 1)); font-size: calc(13px * var(--s, 1)); cursor: pointer; transition: all 0.2s ease;" data-i18n="logout">
-                            退出登录
-                        </button>
-                    </div>
-                </div>
         </div>
 
         <main class="main-area">
@@ -913,10 +760,6 @@
                         <button type="button" data-px-lang="en" onclick="document.getElementById('langEn').click(); pxSyncLangSeg()">English</button>
                     </div>
                 </div>
-                <div class="px-set-row">
-                    <div><div class="px-set-title" data-i18n="pxSetPs">Photoshop 插件</div><div class="px-set-desc" data-i18n="pxSetPsDesc">在 PS 里直接调用 Pixora 生图</div></div>
-                    <button type="button" class="px-set-btn" onclick="document.getElementById('closeSettingsBtn').click(); document.getElementById('psPluginBtn').click()" data-i18n="pxSetPsBtn">下载插件</button>
-                </div>
                 <div class="input-group" style="display: none;">
                     <label data-i18n="apiKey">API Key <span id="currentApiLabel" style="color: var(--primary); font-size: calc(12px * var(--s, 1));"></span></label>
                     <input type="password" id="apiKeySetting">
@@ -1171,127 +1014,6 @@
             return `http://${host}:3001`;
         }
 
-        // 检测登录状态
-        async function checkLoginStatus() {
-            // 检查localStorage中是否存在登录信息
-            const userStr = localStorage.getItem('nano_user');
-            if (!userStr) {
-                // 未登录，跳转到登录页面
-                window.location.replace('/index.html');
-                return;
-            }
-
-            try {
-                const user = JSON.parse(userStr);
-
-                // 验证用户是否被封禁（使用 user.name/phone 查询，积分服务通过手机号查询）
-                const response = await fetch(`${getBackendUrl()}/api/user/credits`, {
-                    headers: { 'Authorization': 'Bearer ' + (user.token || '') }
-                });
-                // 登录凭证失效（过期或在别处登录被顶掉）：回登录页，避免停留在没有数据的空页面
-                if (response.status === 401) {
-                    localStorage.removeItem('nano_user');
-                    window.location.replace('/index.html');
-                    return;
-                }
-                const data = await response.json();
-
-                if (data.code === 0 && data.data.status === 'blocked') {
-                    // 用户被封禁，清除登录信息并跳转到登录页
-                    localStorage.removeItem('nano_user');
-                    alert('您的账号已被封禁，请联系管理员');
-                    window.location.replace('/index.html');
-                    return;
-                }
-
-                // 已登录且未被封禁，更新头像和用户信息显示
-                updateUserInfo(userStr);
-            } catch (error) {
-                console.error('验证用户状态失败:', error);
-                // 验证失败，仍然显示用户信息（降级处理）
-                updateUserInfo(userStr);
-            }
-        }
-
-        // 更新用户信息
-        function updateUserInfo(userData) {
-            try {
-                const user = JSON.parse(userData);
-                
-                // 更新头像（使用手机号首字母）
-                const avatarText = document.getElementById('avatarText');
-                const dropdownAvatarText = document.getElementById('dropdownAvatarText');
-                if (avatarText && user.phone) {
-                    avatarText.textContent = user.phone.charAt(0).toUpperCase();
-                }
-                if (dropdownAvatarText && user.phone) {
-                    dropdownAvatarText.textContent = user.phone.charAt(0).toUpperCase();
-                }
-                
-                // 更新用户信息
-                const userName = document.getElementById('userName');
-                const userId = document.getElementById('userId');
-                // 用户名位置显示手机号
-                if (userName && user.phone) {
-                    userName.textContent = user.phone;
-                }
-                // 下方显示用户ID
-                if (userId) {
-                    if (user.id) {
-                        userId.textContent = 'uid: ' + user.id;
-                    } else {
-                        userId.textContent = 'uid: -';
-                    }
-                }
-            } catch (error) {
-                console.error('更新用户信息失败:', error);
-            }
-        }
-
-        // 退出登录
-        function logout() {
-            // 清除localStorage中的登录信息
-            localStorage.removeItem('nano_user');
-            // 跳转到登录页面
-            window.location.replace('/index.html');
-        }
-
-        // 切换用户下拉菜单
-        function toggleUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            if (dropdown) {
-                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-            }
-        }
-
-        // 点击页面其他地方关闭下拉菜单
-        function closeDropdownOnClickOutside(event) {
-            const dropdown = document.getElementById('userDropdown');
-            const userAvatar = document.getElementById('userAvatar');
-            if (dropdown && userAvatar && !dropdown.contains(event.target) && !userAvatar.contains(event.target)) {
-                dropdown.style.display = 'none';
-            }
-        }
-
-        // 页面加载时检查登录状态
-        window.onload = async function() {
-            await checkLoginStatus();
-
-            // 绑定用户头像点击事件
-            const userAvatar = document.getElementById('userAvatar');
-            if (userAvatar) {
-                userAvatar.addEventListener('click', toggleUserDropdown);
-            }
-            
-            // 绑定退出登录按钮事件
-            const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
-            if (dropdownLogoutBtn) {
-                dropdownLogoutBtn.addEventListener('click', logout);
-            }
-            
-            // 点击页面其他地方关闭下拉菜单
-            document.addEventListener('click', closeDropdownOnClickOutside);
-        };
     </script>
     <script>
         const API_CONFIG = {
@@ -2703,127 +2425,6 @@
         <div class="dropdown-content horizontal" id="dropdownImages"></div>
     </div>
 
-    <!-- PS 插件介绍弹窗 -->
-    <div id="psPluginModal" class="px-mask" style="display:none;">
-        <div class="px-dialog px-dialog-ps" role="dialog" aria-modal="true" aria-labelledby="psDlgTitle">
-            <button type="button" class="px-dialog-x" onclick="closePsPluginModal()" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-            <div class="px-dialog-head">
-                <div class="px-dialog-icon px-icon-ps">Ps</div>
-                <div>
-                    <div class="px-dialog-title" id="psDlgTitle">Pixora AI · PS 插件</div>
-                    <div class="px-dialog-sub">Photoshop 2020 – 2026 扩展面板</div>
-                </div>
-            </div>
-            <p class="px-dialog-text">在 Photoshop 里直接调用本站 AI 生成与精修能力：选区局部编辑、整图重绘、自动回填对齐，生图结果一键导回画布。</p>
-            <ol class="px-steps">
-                <li><b>下载安装器</b><span>点击下方按钮，保存压缩包并解压</span></li>
-                <li><b>运行安装</b><span>双击解压出的 Pixora安装器.exe，自动完成安装</span></li>
-                <li><b>打开面板</b><span>重启 Photoshop，窗口 → 扩展功能 → Pixora AI</span></li>
-                <li><b>登录使用</b><span>用本站账号密码登录即可</span></li>
-            </ol>
-            <div class="px-dialog-note">支持 Windows 版 Photoshop 2020–2026（21.x–27.x）。插件会自动检查更新，有新版本时在面板内一键升级。</div>
-            <div class="px-dialog-note" style="margin-top:8px;">插件提示“未经正确签署”无法加载？<a href="/pixora-dist/Pixora-Fix.zip" download style="color:inherit;font-weight:600;text-decoration:underline;margin-left:4px;">下载修复工具</a><br><span>解压后双击 Pixora修复.bat，然后重启 Photoshop</span></div>
-            <div class="px-dialog-actions">
-                <button type="button" class="px-btn px-btn-ghost" onclick="closePsPluginModal()">关闭</button>
-                <button type="button" class="px-btn px-btn-primary" onclick="downloadPlugin()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载安装器
-                </button>
-            </div>
-        </div>
-    </div>
-    <script>
-    function showPsPluginModal(){var m=document.getElementById('psPluginModal');m.style.display='flex';}
-    function closePsPluginModal(){var m=document.getElementById('psPluginModal');m.style.display='none';}
-    async function downloadPlugin(){
-        var user={};
-        try{user=JSON.parse(localStorage.getItem('nano_user')||'{}');}catch(e){}
-        if(!user.token){alert('请先登录后再下载插件');window.location.href='/index.html';return;}
-        try{
-            var resp=await fetch('/pixora-dist/Pixora-Setup.zip',{headers:{'Authorization':'Bearer '+user.token}});
-            if(resp.status===401){alert('登录已过期，请重新登录后再下载');window.location.href='/index.html';return;}
-            if(!resp.ok){alert('下载失败（'+resp.status+'），请稍后重试');return;}
-            var blob=await resp.blob();
-            var url=URL.createObjectURL(blob);
-            var a=document.createElement('a');
-            a.href=url;a.download='Pixora安装器.zip';
-            document.body.appendChild(a);a.click();a.remove();
-            URL.revokeObjectURL(url);
-        }catch(err){alert('下载出错：'+err.message);}
-    }
-    document.getElementById('psPluginModal').addEventListener('click',function(e){if(e.target===this)closePsPluginModal();});
-    </script>
-    <div id="inviteModal" class="px-mask" style="display:none;">
-        <div class="px-dialog px-dialog-cdk" role="dialog" aria-modal="true" aria-labelledby="inviteDlgTitle">
-            <button type="button" class="px-dialog-x" onclick="closeInviteModal()" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-            <div class="px-dialog-head">
-                <div class="px-dialog-icon px-icon-coin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg></div>
-                <div>
-                    <div class="px-dialog-title" id="inviteDlgTitle">邀请有礼</div>
-                    <div class="px-dialog-sub">好友注册得积分，你拿充值返利</div>
-                </div>
-            </div>
-            <div id="inviteBody" class="px-dialog-msg">加载中...</div>
-            <div id="inviteStats" style="display:none;">
-                <div class="px-field" style="display:flex;align-items:center;gap:calc(8px * var(--s, 1));">
-                    <input id="inviteCodeText" class="px-input" readonly style="flex:1;font-family:monospace;letter-spacing:2px;text-align:center;font-size:calc(18px * var(--s, 1));" value="">
-                    <button type="button" class="px-btn px-btn-primary" id="inviteCopyBtn" onclick="copyInviteCode()" style="white-space:nowrap;">复制</button>
-                </div>
-                <div style="display:flex;gap:calc(10px * var(--s, 1));margin-top:calc(12px * var(--s, 1));">
-                    <div style="flex:1;background:var(--px-surface-2,#f7f8fa);border-radius:calc(8px * var(--s, 1));padding:calc(10px * var(--s, 1));text-align:center;">
-                        <div style="font-size:calc(12px * var(--s, 1));color:var(--px-text-3);">已邀请</div>
-                        <div id="inviteCount" style="font-weight:600;font-size:calc(15px * var(--s, 1));margin-top:calc(2px * var(--s, 1));">0 / 50</div>
-                    </div>
-                    <div style="flex:1;background:var(--px-surface-2,#f7f8fa);border-radius:calc(8px * var(--s, 1));padding:calc(10px * var(--s, 1));text-align:center;">
-                        <div style="font-size:calc(12px * var(--s, 1));color:var(--px-text-3);">累计返利</div>
-                        <div id="inviteRebate" style="font-weight:600;font-size:calc(15px * var(--s, 1));margin-top:calc(2px * var(--s, 1));">0 积分</div>
-                    </div>
-                </div>
-                <div style="margin-top:calc(12px * var(--s, 1));font-size:calc(12px * var(--s, 1));line-height:1.7;color:var(--px-text-3);">
-                    好友用你的邀请码注册，好友立得 10 积分；<br>
-                    好友每次充值，你可获得 5% 积分，单次最高 2000 积分；<br>
-                    每人最多邀请 50 人。
-                </div>
-            </div>
-            <div class="px-dialog-actions">
-                <button type="button" class="px-btn px-btn-ghost" onclick="closeInviteModal()">关闭</button>
-            </div>
-        </div>
-    </div>
-    <script>
-    function showInviteModal(){
-        var m=document.getElementById('inviteModal');m.style.display='flex';
-        var body=document.getElementById('inviteBody');
-        var stats=document.getElementById('inviteStats');
-        body.style.display='block';body.textContent='加载中...';stats.style.display='none';
-        var user={};try{user=JSON.parse(localStorage.getItem('nano_user')||'{}');}catch(e){}
-        if(user.token===undefined||user.token===null||user.token===''){body.textContent='请先登录后重试';return;}
-        fetch(getBackendUrl()+'/api/invite/me',{headers:{'Authorization':'Bearer '+user.token}})
-            .then(function(r){return r.json();})
-            .then(function(d){
-                if(d&&d.code===0&&d.data){
-                    document.getElementById('inviteCodeText').value=d.data.code||'';
-                    document.getElementById('inviteCount').textContent=(d.data.invited||0)+' / '+(d.data.maxInvites||50);
-                    document.getElementById('inviteRebate').textContent=(d.data.rebateTotal||0)+' 积分';
-                    body.style.display='none';stats.style.display='block';
-                }else{
-                    body.textContent=(d&&d.msg)||'加载失败';
-                }
-            })
-            .catch(function(){body.textContent='网络错误，请稍后重试';});
-    }
-    function closeInviteModal(){document.getElementById('inviteModal').style.display='none';}
-    function copyInviteCode(){
-        var el=document.getElementById('inviteCodeText');
-        var txt=(el&&el.value)||'';
-        if(!txt)return;
-        var btn=document.getElementById('inviteCopyBtn');
-        var done=function(){if(btn){btn.textContent='已复制';setTimeout(function(){btn.textContent='复制';},1500);}};
-        if(navigator.clipboard&&navigator.clipboard.writeText){
-            navigator.clipboard.writeText(txt).then(done).catch(function(){el.select();document.execCommand('copy');done();});
-        }else{el.select();document.execCommand('copy');done();}
-    }
-    document.getElementById('inviteModal').addEventListener('click',function(e){if(e.target===this)closeInviteModal();});
-    </script>
 
     <link rel="stylesheet" href="pxl/ui.css?v=1793760000">
     <script src="pxl/ui.js?v=1793760000"></script>

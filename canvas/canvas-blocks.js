@@ -175,7 +175,7 @@
                 prompt: '', model: '', size: '4K', aspectRatio: '1:1',
                 duration: 5, resolution: '',      // 视频节点专用：时长(秒)与分辨率
                 videoUrl: '', mediaUrl: '', mediaType: '',  // 媒体：视频结果/参考素材地址与类型
-                assetId: '', assetStatus: '',     // 素材库：icover 入库 ID 与状态（ref 图节点用）
+                assetId: '', assetStatus: '',     // 素材库：入库 ID 与状态（ref 图节点用）
                 text: '', insertPos: 'head',   // 文本节点专用：text=内容，insertPos='head'|'tail'
                 status: 'idle',  // ref: idle/loading ; gen: idle/generating/done/failed
                 taskId: '',      // 生成节点关联的任务ID，持久化保存，用于刷新/长时间搁置后按节点自身查询真实状态

@@ -34,7 +34,6 @@ window.__PX_ZH_EN = Object.assign(window.__PX_ZH_EN || {}, {
   "Image 系列 A": "Image Series A",
   "Image 系列 B": "Image Series B",
   "视频生成": "Video Generation",
-  "icover 素材库": "icover Asset Library",
   "GPT Image 2 标准版，均衡质量与速度": "GPT Image 2 Standard: balanced quality and speed",
   "GPT Image 2.5 Pro 高速专线：画质与编辑精度优先": "GPT Image 2.5 Pro High-Speed: quality and edit precision first",
   "GPT Image 2.5 Pro 高速专线：速度优先": "GPT Image 2.5 Pro High-Speed: speed first",

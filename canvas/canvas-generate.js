@@ -169,7 +169,7 @@
             throw new Error(data.msg || '上传失败');
         },
 
-        // 入库 icover.ai 素材库（Seedance 人物一致性），返回 { assetId, status }；失败抛错
+        // 入库素材库（部分视频模型的人物一致性需以素材 ID 引用），返回 { assetId, status }；失败抛错
         async ingestAsset(node) {
             const url = node.imageUrl || node.mediumUrl || node.previewUrl;
             if (!url) throw new Error('节点暂无图片，无法入库');

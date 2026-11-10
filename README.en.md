@@ -17,7 +17,7 @@
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/pixora-lite.git
+git clone https://github.com/1321701/pixora-lite.git
 cd pixora-lite
 python -m http.server 8080
 ```

@@ -5,7 +5,7 @@ Pixora Lite 是纯静态站点，把仓库文件原样放到任意静态服务�
 ## 1. 准备文件
 
 ```bash
-git clone https://github.com/<you>/pixora-lite.git /var/www/pixora-lite
+git clone https://github.com/1321701/pixora-lite.git /var/www/pixora-lite
 cd /var/www/pixora-lite
 # 按需修改 config.js（见 README 配置表）
 node scripts/bump-version.js   # 每次更新代码后执行，刷新浏览器缓存
